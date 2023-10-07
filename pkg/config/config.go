@@ -14,9 +14,10 @@ import (
 )
 
 type Config struct {
-	Database Database    `yaml:"database"`
-	SSH      SSH         `yaml:"ssh"`
-	Saver    BinlogSaver `yaml:"saver"`
+	Database  Database    `yaml:"database"`
+	SSH       SSH         `yaml:"ssh"`
+	Saver     BinlogSaver `yaml:"saver"`
+	Publisher Publisher   `yaml:"publisher"`
 }
 
 func LoadConfig(filePath string) (*Config, error) {
@@ -27,6 +28,9 @@ func LoadConfig(filePath string) (*Config, error) {
 	defer f.Close()
 	var config Config
 	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
+		return nil, err
+	}
+	if err := config.Validation(); err != nil {
 		return nil, err
 	}
 	return &config, nil
@@ -93,4 +97,11 @@ func (c *Config) NewBinlogSyncer(serverId int) (*replication.BinlogSyncer, error
 		TLSConfig: c.Database.Tls(),
 	}
 	return replication.NewBinlogSyncer(cfg), nil
+}
+
+func (c *Config) Validation() error {
+	if err := c.Publisher.Validation(); err != nil {
+		return err
+	}
+	return nil
 }
