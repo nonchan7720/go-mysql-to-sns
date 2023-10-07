@@ -14,3 +14,14 @@ database:
 saver:
   file:
     name: binlog
+
+publisher:
+  aws:
+    accessKey: dummy
+    secretKey: dummy
+    sns:
+      endpoint: http://localstack:4566
+      topics:
+        - tableName: test
+          topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns.fifo
+          messageGroupIdTemplate: "id-{{id}}-text-{{text}}"
