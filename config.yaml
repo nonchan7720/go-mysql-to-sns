@@ -1,0 +1,13 @@
+database:
+  host: db
+  port: 3306
+  username: admin
+  password: pass1234
+  sshTunnel: false
+  # tls:
+  #   insecureSkipVerify: true
+# ssh:
+#   privateKey:
+#   host:
+#   port:
+#   username:
