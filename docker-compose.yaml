@@ -1,0 +1,45 @@
+version: '3.7'
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ./:/src/
+      - ~/.gitconfig:/.gitconfig
+      - ~/.ssh/:/home/user/.ssh/
+    tty: true
+    networks:
+      - default
+      - sqs-polling_default
+  db:
+    image: mysql:8.0
+    platform: linux/x86_64
+    command: '--default-authentication-plugin=mysql_native_password'
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mysql
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: pass1234
+      TZ: Asia/Tokyo
+    volumes:
+      - mysql:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./mysql/scripts/:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+      timeout: 5s
+      retries: 10
+    networks:
+      - default
+volumes:
+  mysql:
+networks:
+  default:
+  sqs-polling_default:
+    external: true
