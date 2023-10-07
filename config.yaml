@@ -11,3 +11,6 @@ database:
 #   host:
 #   port:
 #   username:
+saver:
+  file:
+    name: binlog
