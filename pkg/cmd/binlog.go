@@ -56,13 +56,12 @@ func execute(ctx context.Context, configFilePath string) {
 		}
 		return nil
 	})
-	if err := eg.Wait(); err != nil {
-		panic(err)
+	if err := eg.Wait(); err != nil && err != context.Canceled {
+		slog.Error(err.Error())
 	}
 	stop()
 	slog.Info("shutting down gracefully, press Ctrl+C again to force")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
 }

@@ -8,10 +8,12 @@ import (
 	"github.com/go-mysql-org/go-mysql/replication"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
+	"go.uber.org/multierr"
 )
 
 type Binlog struct {
 	*config.Config
+	pos mysql.Position
 }
 
 func NewBinlog(ctx context.Context, config *config.Config) (*Binlog, error) {
@@ -21,15 +23,25 @@ func NewBinlog(ctx context.Context, config *config.Config) (*Binlog, error) {
 	return binlog, nil
 }
 
-func (binlog *Binlog) Run(ctx context.Context, value chan interfaces.Payload) error {
+func (binlog *Binlog) Run(ctx context.Context, value chan interfaces.Payload) (err error) {
 	conn, err := binlog.Connect(ctx)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-	file, pos, err := binlog.loadBinlog(conn)
-	if err != nil {
-		return err
+	var (
+		file string
+		pos  int
+	)
+	if f, p, loadErr := binlog.Config.Saver.Load(); loadErr == nil {
+		file = f
+		pos = p
+	}
+	if file == "" && pos == 0 {
+		file, pos, err = binlog.loadBinlog(conn)
+		if err != nil {
+			return
+		}
 	}
 	info := NewTableInfo(conn)
 	serverId, err := binlog.findServerId(conn)
@@ -40,8 +52,13 @@ func (binlog *Binlog) Run(ctx context.Context, value chan interfaces.Payload) er
 	if err != nil {
 		return err
 	}
-	defer syncer.Close()
-
+	defer func() {
+		pos := syncer.GetNextPosition()
+		if saveErr := binlog.Config.Saver.Save(pos.Name, int(pos.Pos)); saveErr != nil {
+			err = multierr.Append(err, saveErr)
+		}
+		syncer.Close()
+	}()
 	streamer, err := syncer.StartSync(mysql.Position{Name: file, Pos: uint32(pos)})
 	if err != nil {
 		return err
@@ -50,6 +67,9 @@ func (binlog *Binlog) Run(ctx context.Context, value chan interfaces.Payload) er
 	for {
 		ev, err := streamer.GetEvent(ctx)
 		if err != nil {
+			if err != context.Canceled {
+				return nil
+			}
 			return err
 		}
 		var (
@@ -195,6 +215,10 @@ func (binlog *Binlog) findServerId(conn *sql.DB) (serverId int, err error) {
 		return
 	}
 	return
+}
+
+func (binlog *Binlog) SavePosition(fn func(file string, position int)) {
+	fn(binlog.pos.Name, int(binlog.pos.Pos))
 }
 
 func binlogRowToPayloadRow(row []interface{}, tableColumns []Column) interfaces.Row {
