@@ -7,9 +7,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/aws"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
@@ -39,6 +41,16 @@ func execute(ctx context.Context, configFilePath string) {
 	if err != nil {
 		panic(err)
 	}
+
+	var publisher interfaces.Publisher
+	if config.Publisher.IsAWS() {
+		if client, err := aws.NewSNSClient(ctx, config.Publisher.AWS); err != nil {
+			panic(err)
+		} else {
+			publisher = service.NewAWSPublisher(client, config.Publisher.AWS)
+		}
+	}
+
 	binlog, err := mysql.NewBinlog(ctx, config)
 	if err != nil {
 		panic(err)
@@ -51,8 +63,9 @@ func execute(ctx context.Context, configFilePath string) {
 	})
 	eg.Go(func() error {
 		for p := range payload {
-			json, _ := p.ToJson()
-			slog.Info(json)
+			if err := publisher.Publish(ctx, p); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
