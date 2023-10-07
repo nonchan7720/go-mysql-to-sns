@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"net"
-	"os"
 	"time"
 
 	"github.com/go-mysql-org/go-mysql/client"
@@ -21,7 +20,7 @@ type Config struct {
 }
 
 func LoadConfig(filePath string) (*Config, error) {
-	f, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
+	f, err := NewExpandEnv(filePath)
 	if err != nil {
 		return nil, err
 	}
