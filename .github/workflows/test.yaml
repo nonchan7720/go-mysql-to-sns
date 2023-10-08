@@ -1,7 +1,6 @@
 name: Default
 
 on:
-  push:
   pull_request:
 
 env:
