@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
       - name: setup services
         run: |
-          docker compose -f docker-compose.yaml -f ci.compose.yaml up -d db localstack
+          docker compose -f docker-compose.yaml -f ci.compose.yaml up -d db localstack --wait
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
