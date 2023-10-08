@@ -1,0 +1,30 @@
+name: Default
+
+on:
+  pull_request:
+
+env:
+  CI: true
+
+jobs:
+  coveralls:
+    name: Test with Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: setup services
+        run: |
+          docker compose -f docker-compose.yaml -f ci.compose.yaml up -d db localstack --wait
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Install dependencies
+        run: |
+          go mod download
+      - name: Run Unit tests
+        run: |
+          go test -covermode atomic -coverprofile=covprofile ./...
