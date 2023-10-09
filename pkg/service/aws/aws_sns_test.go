@@ -1,11 +1,13 @@
-package service
+package aws
 
 import (
 	"context"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	mockAws "github.com/nonchan7720/go-mysql-to-sns/pkg/mock/aws"
@@ -34,7 +36,9 @@ func TestAWSSNS(t *testing.T) {
 				TopicArn:  "arn:aws:sns:ap-northeast-1:000000000000:test-sns",
 			},
 			fn: func(client *mockAws.MockSNSClient, require *require.Assertions) {
-				output := &sns.PublishOutput{}
+				output := &sns.PublishOutput{
+					MessageId: aws.String(uuid.NewString()),
+				}
 				client.EXPECT().Publish(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, input *sns.PublishInput, optFns ...func(*sns.Options)) {
 					require.NotNil(input)
 					require.NotNil(input.Message)
@@ -60,7 +64,9 @@ func TestAWSSNS(t *testing.T) {
 				TopicArn:  "arn:aws:sns:ap-northeast-1:000000000000:test-sns",
 			},
 			fn: func(client *mockAws.MockSNSClient, require *require.Assertions) {
-				output := &sns.PublishOutput{}
+				output := &sns.PublishOutput{
+					MessageId: aws.String(uuid.NewString()),
+				}
 				client.EXPECT().Publish(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, input *sns.PublishInput, optFns ...func(*sns.Options)) {
 					require.NotNil(input)
 					require.NotNil(input.Message)
@@ -85,7 +91,9 @@ func TestAWSSNS(t *testing.T) {
 				TopicArn:  "arn:aws:sns:ap-northeast-1:000000000000:test-sns",
 			},
 			fn: func(client *mockAws.MockSNSClient, require *require.Assertions) {
-				output := &sns.PublishOutput{}
+				output := &sns.PublishOutput{
+					MessageId: aws.String(uuid.NewString()),
+				}
 				client.EXPECT().Publish(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, input *sns.PublishInput, optFns ...func(*sns.Options)) {
 					require.NotNil(input)
 					require.NotNil(input.Message)
@@ -110,7 +118,9 @@ func TestAWSSNS(t *testing.T) {
 				TopicArn:  "arn:aws:sns:ap-northeast-1:000000000000:test-sns",
 			},
 			fn: func(client *mockAws.MockSNSClient, require *require.Assertions) {
-				output := &sns.PublishOutput{}
+				output := &sns.PublishOutput{
+					MessageId: aws.String(uuid.NewString()),
+				}
 				client.EXPECT().Publish(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, input *sns.PublishInput, optFns ...func(*sns.Options)) {
 					require.NotNil(input)
 					require.NotNil(input.Message)
@@ -138,8 +148,11 @@ func TestAWSSNS(t *testing.T) {
 				},
 			}
 			p := newAWSSNS(ctx, client, &conf)
-			err := p.Publish(ctx, tbl.payload)
-			require.NoError(err)
+			for idx := range tbl.payload.Rows {
+				msgId, err := p.Publish(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
+				require.NoError(err)
+				require.NotEmpty(msgId)
+			}
 		})
 	}
 }

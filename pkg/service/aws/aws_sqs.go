@@ -1,14 +1,14 @@
-package service
+package aws
 
 import (
 	"context"
-	"log/slog"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces/aws"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
 )
 
 type awsSQS struct {
@@ -18,10 +18,10 @@ type awsSQS struct {
 }
 
 var (
-	_ interfaces.Publisher = (*awsPublisher)(nil)
+	_ interfaces.BackendPublisher = (*awsSQS)(nil)
 )
 
-func NewAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (interfaces.Publisher, error) {
+func NewAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (interfaces.BackendPublisher, error) {
 	return newAWSSQS(ctx, client, conf)
 }
 
@@ -46,27 +46,24 @@ func newAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (*aw
 	}, nil
 }
 
-func (p *awsSQS) Publish(ctx context.Context, payload interfaces.Payload) error {
-	slog.With(slog.String("Table", payload.Table)).InfoContext(ctx, "Receive payload.")
-	queue, ok := p.mpTableQueue[strings.ToLower(payload.Table)]
-	if !ok {
-		// 登録されていないテーブルは対象外
-		return nil
+func (p *awsSQS) IsTarget(ctx context.Context, payload interfaces.SendPayload) bool {
+	return service.IsTarget(p.mpTableQueue, payload)
+}
+
+func (p *awsSQS) Publish(ctx context.Context, event interfaces.Event, payload interfaces.SendPayload) (string, error) {
+	queue := service.FindTarget(p.mpTableQueue, payload)
+	v, err := payload.ToJson()
+	if err != nil {
+		return "", err
 	}
-	slog.With(slog.String("Table", payload.Table)).InfoContext(ctx, "Publish.")
-	for idx, row := range payload.Rows {
-		v, err := payload.ToJson(idx)
-		if err != nil {
-			return err
-		}
-		input := &sqs.SendMessageInput{
-			MessageBody:    &v,
-			MessageGroupId: queue.GetMessageGroupId(row.MainRow(payload.Event)),
-			QueueUrl:       &queue.QueueUrl,
-		}
-		if _, err := p.client.SendMessage(ctx, input); err != nil {
-			return err
-		}
+	input := &sqs.SendMessageInput{
+		MessageBody:    &v,
+		MessageGroupId: queue.GetMessageGroupId(payload.Row.MainRow(payload.Event)),
+		QueueUrl:       &queue.QueueUrl,
 	}
-	return nil
+	if output, err := p.client.SendMessage(ctx, input); err != nil {
+		return "", err
+	} else {
+		return *output.MessageId, nil
+	}
 }

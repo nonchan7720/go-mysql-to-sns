@@ -1,11 +1,13 @@
-package service
+package aws
 
 import (
 	"context"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	mockAws "github.com/nonchan7720/go-mysql-to-sns/pkg/mock/aws"
@@ -34,7 +36,9 @@ func TestAWSSQS(t *testing.T) {
 				QueueUrl:  "http://localhost:4566/000000000000/test-sqs",
 			},
 			fn: func(client *mockAws.MockSQSClient, require *require.Assertions) {
-				output := &sqs.SendMessageOutput{}
+				output := &sqs.SendMessageOutput{
+					MessageId: aws.String(uuid.NewString()),
+				}
 				client.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) {
 					require.NotNil(input)
 					require.NotNil(input.MessageBody)
@@ -60,7 +64,9 @@ func TestAWSSQS(t *testing.T) {
 				QueueUrl:  "http://localhost:4566/000000000000/test-sqs",
 			},
 			fn: func(client *mockAws.MockSQSClient, require *require.Assertions) {
-				output := &sqs.SendMessageOutput{}
+				output := &sqs.SendMessageOutput{
+					MessageId: aws.String(uuid.NewString()),
+				}
 				client.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) {
 					require.NotNil(input)
 					require.NotNil(input.MessageBody)
@@ -85,7 +91,9 @@ func TestAWSSQS(t *testing.T) {
 				QueueUrl:  "http://localhost:4566/000000000000/test-sqs",
 			},
 			fn: func(client *mockAws.MockSQSClient, require *require.Assertions) {
-				output := &sqs.SendMessageOutput{}
+				output := &sqs.SendMessageOutput{
+					MessageId: aws.String(uuid.NewString()),
+				}
 				client.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) {
 					require.NotNil(input)
 					require.NotNil(input.MessageBody)
@@ -110,7 +118,9 @@ func TestAWSSQS(t *testing.T) {
 				QueueUrl:  "http://localhost:4566/000000000000/test-sqs",
 			},
 			fn: func(client *mockAws.MockSQSClient, require *require.Assertions) {
-				output := &sqs.SendMessageOutput{}
+				output := &sqs.SendMessageOutput{
+					MessageId: aws.String(uuid.NewString()),
+				}
 				client.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) {
 					require.NotNil(input)
 					require.NotNil(input.MessageBody)
@@ -139,8 +149,11 @@ func TestAWSSQS(t *testing.T) {
 			}
 			p, err := newAWSSQS(ctx, client, &conf)
 			require.NoError(err)
-			err = p.Publish(ctx, tbl.payload)
-			require.NoError(err)
+			for idx := range tbl.payload.Rows {
+				msgId, err := p.Publish(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
+				require.NoError(err)
+				require.NotEmpty(msgId)
+			}
 		})
 	}
 }
