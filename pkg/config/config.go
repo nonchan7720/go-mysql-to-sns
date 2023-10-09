@@ -17,7 +17,7 @@ type Config struct {
 	Database  Database    `yaml:"database"`
 	SSH       SSH         `yaml:"ssh"`
 	Saver     BinlogSaver `yaml:"saver"`
-	Publisher Publisher   `yaml:"publisher"`
+	Publisher *Publisher  `yaml:"publisher"`
 }
 
 func LoadConfig(filePath string) (*Config, error) {

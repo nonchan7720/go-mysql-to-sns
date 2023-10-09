@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 )
 
 type Endpoint struct {
@@ -27,6 +28,7 @@ func NewEndpoint(opts ...Option) *Endpoint {
 		opt.apply(o)
 	}
 	e.SNSEndpoint(o.snsEndpoint)
+	e.SQSEndpoint(o.sqsEndpoint)
 	return e
 }
 
@@ -56,4 +58,12 @@ func (e *Endpoint) SNSEndpoint(endpoint string) {
 		return
 	}
 	e.AddEndpoint(sns.ServiceID, aws.Endpoint{URL: endpoint})
+}
+
+func (e *Endpoint) SQSEndpoint(endpoint string) {
+	if endpoint == "" {
+		// awsのデフォルトを使うために何もしない
+		return
+	}
+	e.AddEndpoint(sqs.ServiceID, aws.Endpoint{URL: endpoint})
 }
