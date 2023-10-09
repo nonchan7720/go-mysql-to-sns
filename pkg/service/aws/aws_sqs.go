@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"log/slog"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
@@ -26,15 +27,17 @@ func NewAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (int
 
 func newAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (*awsSQS, error) {
 	mpTableQueue := make(map[string]config.Queue, len(conf.SQS.Queues))
-	for _, queue := range conf.SQS.Queues {
+	for idx := range conf.SQS.Queues {
+		queue := conf.SQS.Queues[idx]
 		if queue.QueueUrl == "" {
 			resp, err := client.GetQueueUrl(ctx, &sqs.GetQueueUrlInput{QueueName: &queue.QueueName})
 			if err != nil {
 				return nil, err
 			}
 			queue.QueueUrl = *resp.QueueUrl
+			conf.SQS.Queues[idx] = queue
 		}
-		mpTableQueue[queue.TableName] = queue
+		mpTableQueue[strings.ToLower(queue.TableName)] = queue
 	}
 	return &awsSQS{
 		client:       client,
@@ -44,12 +47,13 @@ func newAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (*aw
 }
 
 func (p *awsSQS) Publish(ctx context.Context, payload interfaces.Payload) error {
-	slog.With(slog.String("Table", payload.Table)).InfoContext(ctx, "Publish.")
-	queue, ok := p.mpTableQueue[payload.Table]
+	slog.With(slog.String("Table", payload.Table)).InfoContext(ctx, "Receive payload.")
+	queue, ok := p.mpTableQueue[strings.ToLower(payload.Table)]
 	if !ok {
 		// 登録されていないテーブルは対象外
 		return nil
 	}
+	slog.With(slog.String("Table", payload.Table)).InfoContext(ctx, "Publish.")
 	for idx, row := range payload.Rows {
 		v, err := payload.ToJson(idx)
 		if err != nil {

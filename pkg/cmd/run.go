@@ -8,11 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/aws"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/backend/aws"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
+	service "github.com/nonchan7720/go-mysql-to-sns/pkg/service/aws"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )

@@ -1,6 +1,9 @@
 package interfaces
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 type Event int
 
@@ -39,16 +42,22 @@ type PayloadRow struct {
 }
 
 func (r *PayloadRow) MainRow(event Event) Row {
+	mp := map[string]interface{}{}
 	switch event {
 	case Create:
-		return r.NewRow
+		for key, value := range r.NewRow {
+			mp[strings.ToLower(key)] = value
+		}
 	case Update:
-		return r.OldRow
+		for key, value := range r.OldRow {
+			mp[strings.ToLower(key)] = value
+		}
 	case Delete:
-		return r.OldRow
-	default:
-		return nil
+		for key, value := range r.OldRow {
+			mp[strings.ToLower(key)] = value
+		}
 	}
+	return mp
 }
 
 func NewPayloadRow(oldRow Row, newRow Row) PayloadRow {
