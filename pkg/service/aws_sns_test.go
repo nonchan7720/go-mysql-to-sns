@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAWSPublisher(t *testing.T) {
+func TestAWSSNS(t *testing.T) {
 	var tables = []struct {
 		name    string
 		payload interfaces.Payload
@@ -131,13 +131,13 @@ func TestAWSPublisher(t *testing.T) {
 			client := mockAws.NewMockSNSClient(mockCtl)
 			tbl.fn(client, require)
 			conf := config.AWS{
-				SNS: config.SNS{
+				SNS: &config.SNS{
 					Topics: []config.Topic{
 						tbl.topic,
 					},
 				},
 			}
-			p := newAWSPublisher(client, &conf)
+			p := newAWSSNS(ctx, client, &conf)
 			err := p.Publish(ctx, tbl.payload)
 			require.NoError(err)
 		})

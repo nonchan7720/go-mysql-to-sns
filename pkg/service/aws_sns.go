@@ -5,9 +5,9 @@ import (
 	"log/slog"
 
 	"github.com/aws/aws-sdk-go-v2/service/sns"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/aws"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces/aws"
 )
 
 type awsPublisher struct {
@@ -20,11 +20,11 @@ var (
 	_ interfaces.Publisher = (*awsPublisher)(nil)
 )
 
-func NewAWSPublisher(client aws.SNSClient, conf *config.AWS) interfaces.Publisher {
-	return newAWSPublisher(client, conf)
+func NewAWSSNS(ctx context.Context, client aws.SNSClient, conf *config.AWS) interfaces.Publisher {
+	return newAWSSNS(ctx, client, conf)
 }
 
-func newAWSPublisher(client aws.SNSClient, conf *config.AWS) *awsPublisher {
+func newAWSSNS(ctx context.Context, client aws.SNSClient, conf *config.AWS) *awsPublisher {
 	mpTableTopic := make(map[string]config.Topic, len(conf.SNS.Topics))
 	for _, topic := range conf.SNS.Topics {
 		mpTableTopic[topic.TableName] = topic

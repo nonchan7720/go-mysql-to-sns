@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os/signal"
 	"syscall"
@@ -42,13 +43,9 @@ func execute(ctx context.Context, configFilePath string) {
 		panic(err)
 	}
 
-	var publisher interfaces.Publisher
-	if config.Publisher.IsAWS() {
-		if client, err := aws.NewSNSClient(ctx, config.Publisher.AWS); err != nil {
-			panic(err)
-		} else {
-			publisher = service.NewAWSPublisher(client, config.Publisher.AWS)
-		}
+	publisher, err := getPublisher(ctx, config.Publisher)
+	if err != nil {
+		panic(err)
 	}
 
 	binlog, err := mysql.NewBinlog(ctx, config)
@@ -77,4 +74,36 @@ func execute(ctx context.Context, configFilePath string) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+}
+
+func getPublisher(ctx context.Context, conf *config.Publisher) (interfaces.Publisher, error) {
+	noSelectedErr := errors.New("Set the Publisher.")
+	var publisher interfaces.Publisher
+	if conf == nil {
+		return nil, noSelectedErr
+	}
+	if conf.IsAWS() {
+		switch {
+		case conf.AWS.IsSNS():
+			if client, err := aws.NewSNSClient(ctx, conf.AWS); err != nil {
+				return nil, err
+			} else {
+				publisher = service.NewAWSSNS(ctx, client, conf.AWS)
+			}
+		case conf.AWS.IsSQS():
+			if client, err := aws.NewSQSClient(ctx, conf.AWS); err != nil {
+				return nil, err
+			} else {
+				publisher, err = service.NewAWSSQS(ctx, client, conf.AWS)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	if publisher == nil {
+		return nil, noSelectedErr
+	}
+	return publisher, nil
 }

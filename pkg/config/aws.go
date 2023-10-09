@@ -1,10 +1,7 @@
 package config
 
 import (
-	"errors"
-	"strings"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
+	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 )
 
@@ -12,18 +9,14 @@ type IEndpoint struct {
 	Endpoint string `yaml:"endpoint"`
 }
 
-type SNS struct {
-	IEndpoint `yaml:",inline"`
-	Topics    []Topic `yaml:"topics"`
-}
-
 type AWS struct {
 	AccessKey string `yaml:"accessKey"`
 	SecretKet string `yaml:"secretKey"`
-	SNS       SNS    `yaml:"sns"`
+	SNS       *SNS   `yaml:"sns"`
+	SQS       *SQS   `yaml:"sqs"`
 }
 
-func (conf *AWS) WithStatic() aws.CredentialsProvider {
+func (conf *AWS) WithStatic() awsv2.CredentialsProvider {
 	if conf.AccessKey == "" && conf.SecretKet == "" {
 		return nil
 	}
@@ -39,27 +32,10 @@ func (conf *AWS) Validation() error {
 	return nil
 }
 
-type Topic struct {
-	TableName              string `yaml:"tableName"`
-	TopicArn               string `yaml:"topicArn"`
-	MessageGroupIdTemplate string `yaml:"messageGroupIdTemplate"`
+func (conf *AWS) IsSNS() bool {
+	return conf.SNS != nil
 }
 
-func (t *Topic) GetMessageGroupId(mp map[string]interface{}) *string {
-	if !t.IsFIFO() {
-		return nil
-	}
-	value := templateExecute(t.MessageGroupIdTemplate, mp)
-	return &value
-}
-
-func (t *Topic) IsFIFO() bool {
-	return strings.HasSuffix(t.TopicArn, ".fifo")
-}
-
-func (t *Topic) Validation() error {
-	if t.IsFIFO() && t.MessageGroupIdTemplate == "" {
-		return errors.New("For FIFO topics, MessageGroupIdTemplate must be set.")
-	}
-	return nil
+func (conf *AWS) IsSQS() bool {
+	return conf.SQS != nil
 }

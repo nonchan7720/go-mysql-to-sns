@@ -2,6 +2,7 @@ package aws
 
 type option struct {
 	snsEndpoint string
+	sqsEndpoint string
 }
 
 type Option interface {
@@ -17,5 +18,11 @@ func (fn optionFn) apply(o *option) {
 func WithSNSEndpoint(endpoint string) Option {
 	return optionFn(func(o *option) {
 		o.snsEndpoint = endpoint
+	})
+}
+
+func WithSQSEndpoint(endpoint string) Option {
+	return optionFn(func(o *option) {
+		o.sqsEndpoint = endpoint
 	})
 }
