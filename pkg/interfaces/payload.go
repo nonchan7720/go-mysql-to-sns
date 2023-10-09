@@ -42,20 +42,26 @@ type PayloadRow struct {
 }
 
 func (r *PayloadRow) MainRow(event Event) Row {
-	mp := map[string]interface{}{}
+	var mp map[string]interface{}
 	switch event {
 	case Create:
+		mp = map[string]interface{}{}
 		for key, value := range r.NewRow {
 			mp[strings.ToLower(key)] = value
 		}
 	case Update:
+		mp = map[string]interface{}{}
 		for key, value := range r.OldRow {
 			mp[strings.ToLower(key)] = value
 		}
 	case Delete:
+		mp = map[string]interface{}{}
 		for key, value := range r.OldRow {
 			mp[strings.ToLower(key)] = value
 		}
+	}
+	if mp != nil {
+		mp["payload_event"] = event.String()
 	}
 	return mp
 }
@@ -80,22 +86,34 @@ type Column struct {
 	Value interface{} `json:"value"`
 }
 
-func (p *Payload) ToJson(rowIdx int) (string, error) {
-	type payload struct {
-		Event  Event      `json:"event"`
-		Schema string     `json:"schema"`
-		Table  string     `json:"table"`
-		Row    PayloadRow `json:"row"`
-	}
-	value := payload{
+func (p *Payload) SendPayload(rowIdx int) SendPayload {
+	return SendPayload{
 		Event:  p.Event,
 		Schema: p.Schema,
 		Table:  p.Table,
 		Row:    p.Rows[rowIdx],
 	}
-	if buf, err := json.Marshal(&value); err != nil {
+}
+
+type SendPayload struct {
+	Event  Event      `json:"event"`
+	Schema string     `json:"schema"`
+	Table  string     `json:"table"`
+	Row    PayloadRow `json:"row"`
+}
+
+func (p *SendPayload) ToJson() (string, error) {
+	if buf, err := json.Marshal(p); err != nil {
 		return "", err
 	} else {
 		return string(buf), nil
 	}
+}
+
+func (p *SendPayload) GetSchema() string {
+	return strings.ToLower(p.Schema)
+}
+
+func (p *SendPayload) GetTable() string {
+	return strings.ToLower(p.Table)
 }
