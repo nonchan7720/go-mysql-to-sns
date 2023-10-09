@@ -8,11 +8,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/aws"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/backend/aws"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
+	backend "github.com/nonchan7720/go-mysql-to-sns/pkg/service/aws"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
@@ -78,7 +79,7 @@ func execute(ctx context.Context, configFilePath string) {
 
 func getPublisher(ctx context.Context, conf *config.Publisher) (interfaces.Publisher, error) {
 	noSelectedErr := errors.New("Set the Publisher.")
-	var publisher interfaces.Publisher
+	var publisher interfaces.BackendPublisher
 	if conf == nil {
 		return nil, noSelectedErr
 	}
@@ -88,13 +89,13 @@ func getPublisher(ctx context.Context, conf *config.Publisher) (interfaces.Publi
 			if client, err := aws.NewSNSClient(ctx, conf.AWS); err != nil {
 				return nil, err
 			} else {
-				publisher = service.NewAWSSNS(ctx, client, conf.AWS)
+				publisher = backend.NewAWSSNS(ctx, client, conf.AWS)
 			}
 		case conf.AWS.IsSQS():
 			if client, err := aws.NewSQSClient(ctx, conf.AWS); err != nil {
 				return nil, err
 			} else {
-				publisher, err = service.NewAWSSQS(ctx, client, conf.AWS)
+				publisher, err = backend.NewAWSSQS(ctx, client, conf.AWS)
 				if err != nil {
 					return nil, err
 				}
@@ -105,5 +106,5 @@ func getPublisher(ctx context.Context, conf *config.Publisher) (interfaces.Publi
 	if publisher == nil {
 		return nil, noSelectedErr
 	}
-	return publisher, nil
+	return service.New(publisher), nil
 }

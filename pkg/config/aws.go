@@ -24,9 +24,18 @@ func (conf *AWS) WithStatic() awsv2.CredentialsProvider {
 }
 
 func (conf *AWS) Validation() error {
-	for _, topic := range conf.SNS.Topics {
-		if err := topic.Validation(); err != nil {
-			return err
+	if conf.IsSNS() {
+		for _, topic := range conf.SNS.Topics {
+			if err := topic.Validation(); err != nil {
+				return err
+			}
+		}
+	}
+	if conf.IsSQS() {
+		for _, queue := range conf.SQS.Queues {
+			if err := queue.Validation(); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

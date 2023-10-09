@@ -8,8 +8,8 @@ awslocal sns subscribe \
   --protocol sqs \
   --notification-endpoint arn:aws:sqs:ap-northeast-1:000000000000:test-sns
 
-awslocal sns create-topic --name test-sns.fifo --attributes FifoTopic=true,ContentBasedDeduplication=true
-awslocal sqs create-queue --queue-name test-sns-dlq.fifo --attributes FifoQueue=true,ContentBasedDeduplication=true
+awslocal sns create-topic --name test-sns.fifo --attributes FifoTopic=true
+awslocal sqs create-queue --queue-name test-sns-dlq.fifo --attributes FifoQueue=true
 awslocal sqs create-queue --queue-name test-sns.fifo --attributes \
   '{"FifoQueue": "true","ContentBasedDeduplication": "true","RedrivePolicy": "{\"deadLetterTargetArn\": \"arn:aws:sqs:ap-northeast-1:000000000000:test-sns-dlq.fifo\", \"maxReceiveCount\": 2}"}'
 
