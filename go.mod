@@ -8,9 +8,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.42
 	github.com/aws/aws-sdk-go-v2/service/sns v1.22.1
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.24.6
+	github.com/creasty/defaults v1.7.0
 	github.com/go-mysql-org/go-mysql v1.7.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang/mock v1.6.0
+	github.com/google/uuid v1.3.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.0
@@ -32,7 +34,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.23.1 // indirect
 	github.com/aws/smithy-go v1.15.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/google/uuid v1.3.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/pingcap/errors v0.11.5-0.20210425183316-da1aaba5fb63 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
