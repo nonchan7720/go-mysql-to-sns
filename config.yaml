@@ -3,7 +3,7 @@ database:
   port: 3306
   username: admin
   password: pass1234
-  sshTunnel: false
+  # sshTunnel: false
   # tls:
   #   insecureSkipVerify: true
 # ssh:
@@ -22,12 +22,20 @@ publisher:
     sns:
       endpoint: http://localstack:4566
       topics:
-        - tableName: test
+        - transform:
+            type: table
+            table:
+              schema: mysql
+              tableName: test
           topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns.fifo
           messageGroupIdTemplate: "id-{{id}}"
     # sqs:
     #   endpoint: http://localstack:4566
     #   queues:
-    #     - tableName: test
+    #     - transform:
+    #         type: table
+    #         table:
+    #           schema: mysql
+    #           tableName: test
     #       queueName: test-sns.fifo
     #       messageGroupIdTemplate: "id-{{id}}"
