@@ -8,13 +8,12 @@ import (
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces/aws"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/utils"
 )
 
 type awsSQS struct {
-	client       aws.SQSClient
-	conf         *config.AWS
-	mpTableQueue map[string]config.Queue
+	client aws.SQSClient
+	conf   *config.AWS
 }
 
 var (
@@ -26,32 +25,47 @@ func NewAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (int
 }
 
 func newAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (*awsSQS, error) {
-	mpTableQueue := make(map[string]config.Queue, len(conf.SQS.Queues))
-	for idx := range conf.SQS.Queues {
-		queue := conf.SQS.Queues[idx]
-		if queue.QueueUrl == "" {
-			resp, err := client.GetQueueUrl(ctx, &sqs.GetQueueUrlInput{QueueName: &queue.QueueName})
-			if err != nil {
-				return nil, err
-			}
-			queue.QueueUrl = *resp.QueueUrl
-			conf.SQS.Queues[idx] = queue
-		}
-		mpTableQueue[strings.ToLower(queue.TableName)] = queue
-	}
 	return &awsSQS{
-		client:       client,
-		conf:         conf,
-		mpTableQueue: mpTableQueue,
+		client: client,
+		conf:   conf,
 	}, nil
 }
 
 func (p *awsSQS) IsTarget(ctx context.Context, payload interfaces.SendPayload) bool {
-	return service.IsTarget(p.mpTableQueue, payload)
+	_, ok := p.findQueue(payload)
+	return ok
+}
+
+func (p *awsSQS) findQueue(payload interfaces.SendPayload) (config.Queue, bool) {
+	// 最初に見つかったtopicを使用する
+	for _, queue := range p.conf.SQS.Queues {
+		if queue.Transform.IsTable() {
+			if queue.Transform.Table.IsEnabled(payload.Schema, payload.Table) {
+				return queue, true
+			}
+		} else {
+			if !queue.Transform.Column.Table.IsEnabled(payload.Schema, payload.Table) {
+				continue
+			}
+			row := utils.Mapper(payload.Row.MainRow(payload.Event))
+			v, ok := row.Find(queue.Transform.Column.ColumnName)
+			if !ok {
+				continue
+			}
+			value, ok := v.(string)
+			if !ok {
+				continue
+			}
+			if strings.EqualFold(queue.Transform.Column.Value, value) {
+				return queue, true
+			}
+		}
+	}
+	return config.Queue{}, false
 }
 
 func (p *awsSQS) Publish(ctx context.Context, event interfaces.Event, payload interfaces.SendPayload) (string, error) {
-	queue := service.FindTarget(p.mpTableQueue, payload)
+	queue, _ := p.findQueue(payload)
 	v, err := payload.ToJson()
 	if err != nil {
 		return "", err

@@ -2,18 +2,18 @@ package aws
 
 import (
 	"context"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces/aws"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/utils"
 )
 
 type awsSNS struct {
-	client       aws.SNSClient
-	conf         *config.AWS
-	mpTableTopic map[string]config.Topic
+	client aws.SNSClient
+	conf   *config.AWS
 }
 
 var (
@@ -25,23 +25,47 @@ func NewAWSSNS(ctx context.Context, client aws.SNSClient, conf *config.AWS) inte
 }
 
 func newAWSSNS(ctx context.Context, client aws.SNSClient, conf *config.AWS) *awsSNS {
-	mpTableTopic := make(map[string]config.Topic, len(conf.SNS.Topics))
-	for _, topic := range conf.SNS.Topics {
-		mpTableTopic[topic.TableName] = topic
-	}
 	return &awsSNS{
-		client:       client,
-		conf:         conf,
-		mpTableTopic: mpTableTopic,
+		client: client,
+		conf:   conf,
 	}
 }
 
 func (p *awsSNS) IsTarget(ctx context.Context, payload interfaces.SendPayload) bool {
-	return service.IsTarget(p.mpTableTopic, payload)
+	_, ok := p.findTopic(payload)
+	return ok
+}
+
+func (p *awsSNS) findTopic(payload interfaces.SendPayload) (config.Topic, bool) {
+	// 最初に見つかったtopicを使用する
+	for _, topic := range p.conf.SNS.Topics {
+		if topic.Transform.IsTable() {
+			if topic.Transform.Table.IsEnabled(payload.Schema, payload.Table) {
+				return topic, true
+			}
+		} else {
+			if !topic.Transform.Column.Table.IsEnabled(payload.Schema, payload.Table) {
+				continue
+			}
+			row := utils.Mapper(payload.Row.MainRow(payload.Event))
+			v, ok := row.Find(topic.Transform.Column.ColumnName)
+			if !ok {
+				continue
+			}
+			value, ok := v.(string)
+			if !ok {
+				continue
+			}
+			if strings.EqualFold(topic.Transform.Column.Value, value) {
+				return topic, true
+			}
+		}
+	}
+	return config.Topic{}, false
 }
 
 func (p *awsSNS) Publish(ctx context.Context, event interfaces.Event, payload interfaces.SendPayload) (string, error) {
-	topic := service.FindTarget(p.mpTableTopic, payload)
+	topic, _ := p.findTopic(payload)
 	v, err := payload.ToJson()
 	if err != nil {
 		return "", err
