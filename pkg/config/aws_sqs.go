@@ -13,11 +13,11 @@ type SQS struct {
 }
 
 type Queue struct {
-	TableName              string       `yaml:"tableName"`
 	QueueName              string       `yaml:"queueName"`
 	QueueUrl               string       `yaml:"queueUrl"`
 	MessageGroupIdTemplate string       `yaml:"messageGroupIdTemplate"`
 	TemplateType           TemplateType `yaml:"templateType" default:"Fast"`
+	Transform              Transform    `yaml:"transform"`
 }
 
 func (t *Queue) GetMessageGroupId(mp map[string]interface{}) *string {
