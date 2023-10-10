@@ -10,6 +10,7 @@ import (
 	"text/template"
 
 	"github.com/google/uuid"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/utils"
 	"github.com/valyala/fasttemplate"
 )
 
@@ -48,27 +49,6 @@ func builtins() template.FuncMap {
 	}
 }
 
-type mapper map[string]interface{}
-
-func replaceQuote(key string) string {
-	return strings.ReplaceAll(key, `"`, "")
-}
-
-func (m mapper) find(key string) (interface{}, bool) {
-	keys := strings.Split(replaceQuote(key), ".")
-	return nestedMapLookup(m, keys...)
-}
-
-func (m mapper) findWithDefault(key string, default_ interface{}) interface{} {
-	if v, ok := m.find(key); ok {
-		return v
-	}
-	if v, ok := default_.(string); ok {
-		return replaceQuote(v)
-	}
-	return default_
-}
-
 func safeCall(fun reflect.Value, args []reflect.Value) (val reflect.Value, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -98,7 +78,7 @@ func unwrap(v reflect.Value) reflect.Value {
 }
 
 func fastTemplate(str string, mp map[string]interface{}) string {
-	mapper := mapper(mp)
+	mapper := utils.Mapper(mp)
 	fnMap := builtins()
 	tpl := fasttemplate.New(str, "{{", "}}")
 	runFunc := func(tag string) (interface{}, error) {
@@ -108,7 +88,7 @@ func fastTemplate(str string, mp map[string]interface{}) string {
 			fv := reflect.ValueOf(fn)
 			argv := []reflect.Value{}
 			for _, value := range values[1:] {
-				argv = append(argv, reflect.ValueOf(mapper.findWithDefault(value, value)))
+				argv = append(argv, reflect.ValueOf(mapper.FindWithDefault(value, value)))
 			}
 			v, err := safeCall(fv, argv)
 			if err != nil {
@@ -119,7 +99,7 @@ func fastTemplate(str string, mp map[string]interface{}) string {
 		return "", fmt.Errorf("Missing tag: %s", tag)
 	}
 	return tpl.ExecuteFuncString(func(w io.Writer, tag string) (int, error) {
-		v, ok := mapper.find(tag)
+		v, ok := mapper.Find(tag)
 		if !ok {
 			var err error
 			v, err = runFunc(tag)
@@ -143,36 +123,4 @@ func goTemplate(str string, mp map[string]interface{}) string {
 		return ""
 	}
 	return buf.String()
-}
-
-func nestedMapLookup(m map[string]interface{}, ks ...string) (interface{}, bool) {
-	var ok bool
-	var val interface{}
-
-	// 入力の検証
-	if len(ks) == 0 {
-		return nil, false
-	}
-	if ks[0] == "" {
-		return nil, false
-	}
-
-	// 最初のキーで値を取得する。
-	val, ok = m[ks[0]]
-	if !ok {
-		return nil, false
-	}
-
-	// 最後のキーの場合、値を返す。
-	if len(ks) == 1 {
-		return val, true
-	}
-
-	// 値がマップの場合、再帰的にネストされたマップを探索する。
-	if m, ok := val.(map[string]interface{}); ok {
-		return nestedMapLookup(m, ks[1:]...)
-	}
-
-	// 値がマップでない場合、エラーを返す。
-	return nil, false
 }

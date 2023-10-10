@@ -13,10 +13,10 @@ type SNS struct {
 }
 
 type Topic struct {
-	TableName              string       `yaml:"tableName"`
 	TopicArn               string       `yaml:"topicArn"`
 	MessageGroupIdTemplate string       `yaml:"messageGroupIdTemplate"`
 	TemplateType           TemplateType `yaml:"templateType" default:"Fast"`
+	Transform              Transform    `yaml:"transform"`
 }
 
 func (t *Topic) GetMessageGroupId(mp map[string]interface{}) *string {
