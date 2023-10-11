@@ -3,13 +3,39 @@ package config
 import (
 	"errors"
 	"strings"
+	"sync"
 
 	"github.com/creasty/defaults"
+)
+
+var (
+	ErrNotFoundAggregateTypeQueue = errors.New("Not found aggregate type queue.")
 )
 
 type SQS struct {
 	IEndpoint `yaml:",inline"`
 	Queues    []Queue `yaml:"queues"`
+
+	mpAggregateTypeTopic   map[string]Queue
+	lockAggregateTypeTopic sync.Mutex
+	onceMapTopic           sync.Once
+}
+
+func (sqs *SQS) FindOutboxQueue(aggregateType string) (Queue, error) {
+	sqs.lockAggregateTypeTopic.Lock()
+	defer sqs.lockAggregateTypeTopic.Unlock()
+	sqs.onceMapTopic.Do(func() {
+		for _, queue := range sqs.Queues {
+			if queue.Transform.IsOutbox() {
+				sqs.mpAggregateTypeTopic[queue.Transform.Outbox.AggregateType] = queue
+			}
+		}
+	})
+
+	if v, ok := sqs.mpAggregateTypeTopic[aggregateType]; ok {
+		return v, nil
+	}
+	return Queue{}, ErrNotFoundAggregateTypeTopic
 }
 
 type Queue struct {
