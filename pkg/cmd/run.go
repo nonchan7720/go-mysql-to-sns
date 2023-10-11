@@ -61,7 +61,7 @@ func execute(ctx context.Context, configFilePath string) {
 	})
 	eg.Go(func() error {
 		for p := range payload {
-			if err := publisher.Publish(ctx, p); err != nil {
+			if err := publisher.PublishBinlog(ctx, p); err != nil {
 				return err
 			}
 		}
