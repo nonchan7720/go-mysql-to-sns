@@ -25,6 +25,7 @@ func (sns *SNS) FindOutboxTopic(aggregateType string) (Topic, error) {
 	sns.lockAggregateTypeTopic.Lock()
 	defer sns.lockAggregateTypeTopic.Unlock()
 	sns.onceMapTopic.Do(func() {
+		sns.mpAggregateTypeTopic = make(map[string]Topic)
 		for _, topic := range sns.Topics {
 			if topic.Transform.IsOutbox() {
 				sns.mpAggregateTypeTopic[topic.Transform.Outbox.AggregateType] = topic

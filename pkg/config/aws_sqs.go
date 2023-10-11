@@ -25,6 +25,7 @@ func (sqs *SQS) FindOutboxQueue(aggregateType string) (Queue, error) {
 	sqs.lockAggregateTypeTopic.Lock()
 	defer sqs.lockAggregateTypeTopic.Unlock()
 	sqs.onceMapTopic.Do(func() {
+		sqs.mpAggregateTypeTopic = make(map[string]Queue)
 		for _, queue := range sqs.Queues {
 			if queue.Transform.IsOutbox() {
 				sqs.mpAggregateTypeTopic[queue.Transform.Outbox.AggregateType] = queue
