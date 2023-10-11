@@ -1,0 +1,47 @@
+## outboxテーブルを指定する
+outbox:
+  schema: mysql
+  tableName: outbox
+database:
+  host: db
+  port: 3306
+  username: admin
+  password: pass1234
+  # sshTunnel: false
+  # tls:
+  #   insecureSkipVerify: true
+# ssh:
+#   privateKey:
+#   host:
+#   port:
+#   username:
+saver:
+  file:
+    name: binlog
+
+publisher:
+  aws:
+    accessKey: dummy
+    secretKey: dummy
+    sns:
+      endpoint: http://localstack:4566
+      topics:
+        - transform:
+            ## 変換タイプにoutboxを指定
+            type: outbox
+            outbox:
+              ## outboxテーブルの aggregate_typeカラムに設定される情報を設定する
+              ## この値が一致したSNSへoutboxテーブルの情報が送信される
+              aggregateType: test-sns
+          topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns
+          messageGroupIdTemplate: "id-{{id}}"
+    # sqs:
+    #   endpoint: http://localstack:4566
+    #   queues:
+    #     - transform:
+    #         type: table
+    #         table:
+    #           schema: mysql
+    #           tableName: test
+    #       queueName: test-sns.fifo
+    #       messageGroupIdTemplate: "id-{{id}}"
