@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
@@ -171,8 +172,7 @@ func TestAWSSQSWithTable(t *testing.T) {
 					},
 				},
 			}
-			p, err := newAWSSQS(ctx, client, &conf)
-			require.NoError(err)
+			p := newAWSSQS(ctx, client, &conf)
 			for idx := range tbl.payload.Rows {
 				msgId, err := p.PublishBinlog(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
 				require.NoError(err)
@@ -355,13 +355,120 @@ func TestAWSSQSWithColumn(t *testing.T) {
 					},
 				},
 			}
-			p, err := newAWSSQS(ctx, client, &conf)
-			require.NoError(err)
+			p := newAWSSQS(ctx, client, &conf)
 			for idx := range tbl.payload.Rows {
 				msgId, err := p.PublishBinlog(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
 				require.NoError(err)
 				require.NotEmpty(msgId)
 			}
+		})
+	}
+}
+
+func TestAWSSQSWithOutbox(t *testing.T) {
+	var tables = []struct {
+		name   string
+		outbox interfaces.Outbox
+		queue  config.Queue
+		fn     func(client *mockAws.MockSQSClient, require *require.Assertions)
+		expect func(require *require.Assertions, msgId string, err error)
+	}{
+		{
+			name: "AggregateType OK",
+			outbox: interfaces.Outbox{
+				ID:            1,
+				AggregateType: "topic-sqs",
+				AggregateId:   "xxx",
+				EventType:     "create",
+				Payload:       `{"key":"value"}`,
+			},
+			queue: config.Queue{
+				Transform: config.Transform{
+					Type: config.OutboxPatternType,
+					Outbox: &config.TransformOutbox{
+						AggregateType: "topic-sqs",
+					},
+				},
+				QueueUrl: "http://localhost:4566/000000000000/test-sqs",
+			},
+			fn: func(client *mockAws.MockSQSClient, require *require.Assertions) {
+				output := &sqs.SendMessageOutput{
+					MessageId: aws.String(uuid.NewString()),
+				}
+				client.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) {
+					require.NotNil(input)
+					require.NotNil(input.MessageBody)
+					require.NotNil(input.QueueUrl)
+					require.NotNil(input.MessageGroupId)
+					require.NotNil(input.MessageAttributes)
+					require.Equal(*input.MessageGroupId, "xxx")
+					require.Equal(input.MessageAttributes, map[string]types.MessageAttributeValue{
+						"Event": {
+							DataType:    aws.String("String"),
+							StringValue: aws.String("create"),
+						},
+					})
+					require.Equal(*input.QueueUrl, "http://localhost:4566/000000000000/test-sqs")
+					require.Equal(*input.MessageBody, `{"key":"value"}`)
+				}).Return(output, nil).Times(1)
+			},
+			expect: func(require *require.Assertions, msgId string, err error) {
+				require.NotEmpty(msgId)
+				require.NoError(err)
+			},
+		},
+		{
+			name: "AggregateType NG",
+			outbox: interfaces.Outbox{
+				ID:            1,
+				AggregateType: "topic-ng",
+				AggregateId:   "xxx",
+				EventType:     "create",
+				Payload:       `{"key":"value"}`,
+			},
+			queue: config.Queue{
+				Transform: config.Transform{
+					Type: config.OutboxPatternType,
+					Outbox: &config.TransformOutbox{
+						AggregateType: "topic-sqs",
+					},
+				},
+				QueueName: "http://localhost:4566/000000000000/test-sqs",
+			},
+			fn: func(client *mockAws.MockSQSClient, require *require.Assertions) {
+				output := &sqs.SendMessageOutput{
+					MessageId: aws.String(uuid.NewString()),
+				}
+				client.EXPECT().
+					SendMessage(gomock.Any(), gomock.Any()).
+					Do(func(ctx context.Context, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) {}).
+					Return(output, nil).Times(0)
+			},
+			expect: func(require *require.Assertions, msgId string, err error) {
+				require.Empty(msgId)
+				require.Error(err)
+			},
+		},
+	}
+	ctx := context.Background()
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+	for _, tbl := range tables {
+		tbl := tbl
+		t.Run(tbl.name, func(t *testing.T) {
+			require := require.New(t)
+			client := mockAws.NewMockSQSClient(mockCtl)
+			tbl.fn(client, require)
+			conf := config.AWS{
+				SQS: &config.SQS{
+					Queues: []config.Queue{
+						tbl.queue,
+					},
+				},
+			}
+			p := newAWSSQS(ctx, client, &conf)
+			msgId, err := p.PublishOutbox(ctx, tbl.outbox)
+			tbl.expect(require, msgId, err)
 		})
 	}
 }
