@@ -95,10 +95,7 @@ func getPublisher(ctx context.Context, conf *config.Publisher) (interfaces.Publi
 			if client, err := aws.NewSQSClient(ctx, conf.AWS); err != nil {
 				return nil, err
 			} else {
-				publisher, err = backend.NewAWSSQS(ctx, client, conf.AWS)
-				if err != nil {
-					return nil, err
-				}
+				publisher = backend.NewAWSSQS(ctx, client, conf.AWS)
 			}
 		}
 	}

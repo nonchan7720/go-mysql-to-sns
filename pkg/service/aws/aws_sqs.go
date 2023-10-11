@@ -22,15 +22,15 @@ var (
 	_ interfaces.BackendPublisher = (*awsSQS)(nil)
 )
 
-func NewAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (interfaces.BackendPublisher, error) {
+func NewAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) interfaces.BackendPublisher {
 	return newAWSSQS(ctx, client, conf)
 }
 
-func newAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (*awsSQS, error) {
+func newAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) *awsSQS {
 	return &awsSQS{
 		client: client,
 		conf:   conf,
-	}, nil
+	}
 }
 
 func (p *awsSQS) IsTarget(ctx context.Context, payload interfaces.SendPayload) bool {
