@@ -10,7 +10,6 @@ import (
 	"github.com/go-mysql-org/go-mysql/client"
 	"github.com/go-mysql-org/go-mysql/replication"
 	"github.com/go-sql-driver/mysql"
-	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -21,19 +20,14 @@ type Config struct {
 }
 
 func LoadConfig(filePath string) (*Config, error) {
-	f, err := NewExpandEnv(filePath)
+	config, err := loadConfig[Config](filePath)
 	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	var config Config
-	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
 		return nil, err
 	}
 	if err := config.Validation(); err != nil {
 		return nil, err
 	}
-	return &config, nil
+	return config, nil
 }
 
 func (c *Config) Connect(ctx context.Context) (*sql.DB, error) {

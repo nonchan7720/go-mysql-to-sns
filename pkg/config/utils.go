@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/utils"
 	"github.com/valyala/fasttemplate"
+	"gopkg.in/yaml.v3"
 )
 
 type TemplateType string
@@ -123,4 +124,22 @@ func goTemplate(str string, mp map[string]interface{}) string {
 		return ""
 	}
 	return buf.String()
+}
+
+type TConfig interface {
+	Config | Outbox
+}
+
+func loadConfig[T TConfig](filePath string) (*T, error) {
+	f, err := NewExpandEnv(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	var config T
+	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
+		return nil, err
+	}
+	return &config, nil
+
 }
