@@ -63,6 +63,7 @@ func executeOutbox(ctx context.Context, configFilePath string) {
 			if err := publisher.PublishOutbox(ctx, p); err != nil {
 				return err
 			}
+			savePoint <- struct{}{}
 		}
 		return nil
 	})
