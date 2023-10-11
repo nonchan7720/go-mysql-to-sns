@@ -174,7 +174,7 @@ func TestAWSSQSWithTable(t *testing.T) {
 			p, err := newAWSSQS(ctx, client, &conf)
 			require.NoError(err)
 			for idx := range tbl.payload.Rows {
-				msgId, err := p.Publish(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
+				msgId, err := p.PublishBinlog(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
 				require.NoError(err)
 				require.NotEmpty(msgId)
 			}
@@ -358,7 +358,7 @@ func TestAWSSQSWithColumn(t *testing.T) {
 			p, err := newAWSSQS(ctx, client, &conf)
 			require.NoError(err)
 			for idx := range tbl.payload.Rows {
-				msgId, err := p.Publish(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
+				msgId, err := p.PublishBinlog(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
 				require.NoError(err)
 				require.NotEmpty(msgId)
 			}

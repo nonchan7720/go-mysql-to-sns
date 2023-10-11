@@ -173,7 +173,7 @@ func TestAWSSNSWithTable(t *testing.T) {
 			}
 			p := newAWSSNS(ctx, client, &conf)
 			for idx := range tbl.payload.Rows {
-				msgId, err := p.Publish(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
+				msgId, err := p.PublishBinlog(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
 				require.NoError(err)
 				require.NotEmpty(msgId)
 			}
@@ -356,7 +356,7 @@ func TestAWSSNSWithColumn(t *testing.T) {
 			}
 			p := newAWSSNS(ctx, client, &conf)
 			for idx := range tbl.payload.Rows {
-				msgId, err := p.Publish(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
+				msgId, err := p.PublishBinlog(ctx, tbl.payload.Event, tbl.payload.SendPayload(idx))
 				require.NoError(err)
 				require.NotEmpty(msgId)
 			}
