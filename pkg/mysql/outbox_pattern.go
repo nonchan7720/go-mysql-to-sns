@@ -50,6 +50,9 @@ func (outbox *OutboxPattern) Run(ctx context.Context, value chan interfaces.Outb
 		if err != nil {
 			return
 		}
+		if err := outbox.savePosition(file, pos); err != nil {
+			return err
+		}
 	}
 	serverId, err := outbox.findServerId(conn)
 	if err != nil {
@@ -178,7 +181,11 @@ func (outbox *OutboxPattern) Close() {
 
 func (outbox *OutboxPattern) SavePosition() error {
 	pos := outbox.syncer.GetNextPosition()
-	return outbox.Config.Saver.Save(pos.Name, int(pos.Pos))
+	return outbox.savePosition(pos.Name, int(pos.Pos))
+}
+
+func (outbox *OutboxPattern) savePosition(name string, pos int) error {
+	return outbox.Config.Saver.Save(name, pos)
 }
 
 func outboxTableToOutboxInterface(row []interface{}, tableColumns []Column) (*interfaces.Outbox, error) {
