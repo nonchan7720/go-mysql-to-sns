@@ -1,36 +1,47 @@
-outbox:
-  schema: mysql
-  tableName: outbox
+# binlogを読み込みテーブルに対してCUDが行われた時に伝搬する
+
 database:
   host: db
   port: 3306
   username: admin
   password: pass1234
+
+  ## sshトンネル経由でdbに接続したい場合に設定
   # sshTunnel: false
   # tls:
   #   insecureSkipVerify: true
+## sshトンネル経由でdbに接続したい場合に設定
 # ssh:
 #   privateKey:
 #   host:
 #   port:
 #   username:
+
+## binlogの保存先
+## 現在はファイルのみサポート
 saver:
   file:
     name: binlog
 
+## publishする先
+## 現在はawsのみサポート
 publisher:
   aws:
     accessKey: dummy
     secretKey: dummy
+    ## SNSへ送信するパターン
     sns:
       endpoint: http://localstack:4566
       topics:
         - transform:
-            type: outbox
-            outbox:
-              aggregateType: test-sns
-          topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns
+            type: table
+            table:
+              schema: mysql
+              tableName: test
+          topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns.fifo
           messageGroupIdTemplate: "id-{{id}}"
+    
+    ## SQSへ送信するパターン
     # sqs:
     #   endpoint: http://localstack:4566
     #   queues:

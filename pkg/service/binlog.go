@@ -17,7 +17,7 @@ func New(publisher interfaces.BackendPublisher) interfaces.Publisher {
 	}
 }
 
-func (svc *service) Publish(ctx context.Context, payload interfaces.Payload) error {
+func (svc *service) PublishBinlog(ctx context.Context, payload interfaces.Payload) error {
 	slog.With(slog.String("Table", payload.Table)).InfoContext(ctx, "Receive payload.")
 	for idx := range payload.Rows {
 		p := payload.SendPayload(idx)
@@ -29,11 +29,21 @@ func (svc *service) Publish(ctx context.Context, payload interfaces.Payload) err
 			slog.String("Event", payload.Event.String()),
 			slog.Int("Row", idx+1),
 		).InfoContext(ctx, "Publish.")
-		msgId, err := svc.publisher.Publish(ctx, payload.Event, p)
+		msgId, err := svc.publisher.PublishBinlog(ctx, payload.Event, p)
 		if err != nil {
 			return err
 		}
 		slog.Info("Published.", "MessageId", msgId)
 	}
+	return nil
+}
+
+func (svc *service) PublishOutbox(ctx context.Context, outbox interfaces.Outbox) error {
+	slog.With(slog.String("AggregateType", outbox.AggregateType), slog.String("AggregateId", outbox.AggregateId)).InfoContext(ctx, "Receive outbox.")
+	msgId, err := svc.publisher.PublishOutbox(ctx, outbox)
+	if err != nil {
+		return err
+	}
+	slog.Info("Published outbox.", "MessageId", msgId)
 	return nil
 }

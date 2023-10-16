@@ -4,7 +4,9 @@ import (
 	"context"
 	"strings"
 
+	originAWS "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
+	"github.com/aws/aws-sdk-go-v2/service/sns/types"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces/aws"
@@ -64,16 +66,39 @@ func (p *awsSNS) findTopic(payload interfaces.SendPayload) (config.Topic, bool) 
 	return config.Topic{}, false
 }
 
-func (p *awsSNS) Publish(ctx context.Context, event interfaces.Event, payload interfaces.SendPayload) (string, error) {
+func (p *awsSNS) PublishBinlog(ctx context.Context, event interfaces.Event, payload interfaces.SendPayload) (string, error) {
 	topic, _ := p.findTopic(payload)
 	v, err := payload.ToJson()
 	if err != nil {
 		return "", err
 	}
 	input := &sns.PublishInput{
-		Message:        &v,
+		Message:        originAWS.String(v),
 		MessageGroupId: topic.GetMessageGroupId(payload.Row.MainRow(payload.Event)),
-		TargetArn:      &topic.TopicArn,
+		TargetArn:      originAWS.String(topic.TopicArn),
+	}
+	if output, err := p.client.Publish(ctx, input); err != nil {
+		return "", err
+	} else {
+		return *output.MessageId, nil
+	}
+}
+
+func (p *awsSNS) PublishOutbox(ctx context.Context, outbox interfaces.Outbox) (string, error) {
+	topic, err := p.conf.SNS.FindOutboxTopic(outbox.AggregateType)
+	if err != nil {
+		return "", err
+	}
+	input := &sns.PublishInput{
+		Message:        originAWS.String(outbox.Payload),
+		MessageGroupId: originAWS.String(outbox.AggregateId),
+		TargetArn:      originAWS.String(topic.TopicArn),
+		MessageAttributes: map[string]types.MessageAttributeValue{
+			"Event": {
+				DataType:    originAWS.String("String"),
+				StringValue: originAWS.String(outbox.EventType),
+			},
+		},
 	}
 	if output, err := p.client.Publish(ctx, input); err != nil {
 		return "", err

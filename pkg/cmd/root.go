@@ -8,6 +8,7 @@ func rootCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(runCommand())
+	cmd.AddCommand(outboxRunCommand())
 
 	return &cmd
 }

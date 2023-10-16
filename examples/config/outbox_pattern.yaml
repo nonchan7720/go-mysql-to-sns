@@ -1,3 +1,4 @@
+## outboxテーブルを指定する
 outbox:
   schema: mysql
   tableName: outbox
@@ -26,8 +27,11 @@ publisher:
       endpoint: http://localstack:4566
       topics:
         - transform:
+            ## 変換タイプにoutboxを指定
             type: outbox
             outbox:
+              ## outboxテーブルの aggregate_typeカラムに設定される情報を設定する
+              ## この値が一致したSNSへoutboxテーブルの情報が送信される
               aggregateType: test-sns
           topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns
           messageGroupIdTemplate: "id-{{id}}"

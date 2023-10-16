@@ -2,32 +2,28 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/backend/aws"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
-	backend "github.com/nonchan7720/go-mysql-to-sns/pkg/service/aws"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
 
-func runCommand() *cobra.Command {
+func outboxRunCommand() *cobra.Command {
 	var (
 		configFilePath string
 	)
 
 	cmd := cobra.Command{
-		Use: "run",
+		Use: "outbox",
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
-			execute(ctx, configFilePath)
+			executeOutbox(ctx, configFilePath)
 		},
 	}
 	flag := cmd.Flags()
@@ -36,10 +32,10 @@ func runCommand() *cobra.Command {
 	return &cmd
 }
 
-func execute(ctx context.Context, configFilePath string) {
+func executeOutbox(ctx context.Context, configFilePath string) {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	config, err := config.LoadConfig(configFilePath)
+	config, err := config.LoadOutboxConfig(configFilePath)
 	if err != nil {
 		panic(err)
 	}
@@ -49,19 +45,31 @@ func execute(ctx context.Context, configFilePath string) {
 		panic(err)
 	}
 
-	binlog, err := mysql.NewBinlog(ctx, config)
+	binlog, err := mysql.NewOutboxPattern(ctx, config)
 	if err != nil {
 		panic(err)
 	}
-	payload := make(chan interfaces.Payload)
+	defer binlog.Close()
+	payload := make(chan interfaces.Outbox)
+	savePoint := make(chan struct{})
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		defer close(payload)
 		return binlog.Run(ctx, payload)
 	})
 	eg.Go(func() error {
+		defer close(savePoint)
 		for p := range payload {
-			if err := publisher.PublishBinlog(ctx, p); err != nil {
+			if err := publisher.PublishOutbox(ctx, p); err != nil {
+				return err
+			}
+			savePoint <- struct{}{}
+		}
+		return nil
+	})
+	eg.Go(func() error {
+		for range savePoint {
+			if err := binlog.SavePosition(); err != nil {
 				return err
 			}
 		}
@@ -75,33 +83,4 @@ func execute(ctx context.Context, configFilePath string) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-}
-
-func getPublisher(ctx context.Context, conf *config.Publisher) (interfaces.Publisher, error) {
-	noSelectedErr := errors.New("Set the Publisher.")
-	var publisher interfaces.BackendPublisher
-	if conf == nil {
-		return nil, noSelectedErr
-	}
-	if conf.IsAWS() {
-		switch {
-		case conf.AWS.IsSNS():
-			if client, err := aws.NewSNSClient(ctx, conf.AWS); err != nil {
-				return nil, err
-			} else {
-				publisher = backend.NewAWSSNS(ctx, client, conf.AWS)
-			}
-		case conf.AWS.IsSQS():
-			if client, err := aws.NewSQSClient(ctx, conf.AWS); err != nil {
-				return nil, err
-			} else {
-				publisher = backend.NewAWSSQS(ctx, client, conf.AWS)
-			}
-		}
-	}
-
-	if publisher == nil {
-		return nil, noSelectedErr
-	}
-	return service.New(publisher), nil
 }

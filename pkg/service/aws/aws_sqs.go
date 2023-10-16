@@ -4,7 +4,9 @@ import (
 	"context"
 	"strings"
 
+	originAWS "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces/aws"
@@ -20,15 +22,15 @@ var (
 	_ interfaces.BackendPublisher = (*awsSQS)(nil)
 )
 
-func NewAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (interfaces.BackendPublisher, error) {
+func NewAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) interfaces.BackendPublisher {
 	return newAWSSQS(ctx, client, conf)
 }
 
-func newAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) (*awsSQS, error) {
+func newAWSSQS(ctx context.Context, client aws.SQSClient, conf *config.AWS) *awsSQS {
 	return &awsSQS{
 		client: client,
 		conf:   conf,
-	}, nil
+	}
 }
 
 func (p *awsSQS) IsTarget(ctx context.Context, payload interfaces.SendPayload) bool {
@@ -64,7 +66,7 @@ func (p *awsSQS) findQueue(payload interfaces.SendPayload) (config.Queue, bool) 
 	return config.Queue{}, false
 }
 
-func (p *awsSQS) Publish(ctx context.Context, event interfaces.Event, payload interfaces.SendPayload) (string, error) {
+func (p *awsSQS) PublishBinlog(ctx context.Context, event interfaces.Event, payload interfaces.SendPayload) (string, error) {
 	queue, _ := p.findQueue(payload)
 	v, err := payload.ToJson()
 	if err != nil {
@@ -74,6 +76,29 @@ func (p *awsSQS) Publish(ctx context.Context, event interfaces.Event, payload in
 		MessageBody:    &v,
 		MessageGroupId: queue.GetMessageGroupId(payload.Row.MainRow(payload.Event)),
 		QueueUrl:       &queue.QueueUrl,
+	}
+	if output, err := p.client.SendMessage(ctx, input); err != nil {
+		return "", err
+	} else {
+		return *output.MessageId, nil
+	}
+}
+
+func (p *awsSQS) PublishOutbox(ctx context.Context, outbox interfaces.Outbox) (string, error) {
+	queue, err := p.conf.SQS.FindOutboxQueue(outbox.AggregateType)
+	if err != nil {
+		return "", err
+	}
+	input := &sqs.SendMessageInput{
+		MessageBody:    originAWS.String(outbox.Payload),
+		MessageGroupId: originAWS.String(outbox.AggregateId),
+		QueueUrl:       originAWS.String(queue.QueueUrl),
+		MessageAttributes: map[string]types.MessageAttributeValue{
+			"Event": {
+				DataType:    originAWS.String("String"),
+				StringValue: originAWS.String(outbox.EventType),
+			},
+		},
 	}
 	if output, err := p.client.SendMessage(ctx, input); err != nil {
 		return "", err
