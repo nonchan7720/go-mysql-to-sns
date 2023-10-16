@@ -15,6 +15,7 @@ database:
 #   port:
 #   username:
 saver:
+  format: gtid # or position
   file:
     name: binlog
 
