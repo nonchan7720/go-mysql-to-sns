@@ -3,11 +3,9 @@ package mysql
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"strings"
 
-	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
@@ -15,7 +13,7 @@ import (
 
 type OutboxPattern struct {
 	*config.Outbox
-	syncer *replication.BinlogSyncer
+	streamer Streamer
 }
 
 func NewOutboxPattern(ctx context.Context, config *config.Outbox) (*OutboxPattern, error) {
@@ -36,38 +34,11 @@ func (outbox *OutboxPattern) Run(ctx context.Context, value chan interfaces.Outb
 	if err != nil {
 		return
 	}
-	var (
-		file string
-		pos  int
-	)
-	f, p, loadErr := outbox.Config.Saver.Load()
-	if loadErr == nil {
-		file = f
-		pos = p
-	}
-	if file == "" && pos == 0 || loadErr != nil {
-		file, pos, err = outbox.loadBinlog(conn)
-		if err != nil {
-			return
-		}
-		if err := outbox.savePosition(file, pos); err != nil {
-			return err
-		}
-	}
-	serverId, err := outbox.findServerId(conn)
+	streamer, err := NewStreamer(ctx, config.GTID, outbox.Config)
 	if err != nil {
 		return err
 	}
-	syncer, err := outbox.NewBinlogSyncer(serverId)
-	if err != nil {
-		return err
-	}
-	outbox.syncer = syncer
-
-	streamer, err := syncer.StartSync(mysql.Position{Name: file, Pos: uint32(pos)})
-	if err != nil {
-		return err
-	}
+	outbox.streamer = streamer
 
 	for {
 		ev, err := streamer.GetEvent(ctx)
@@ -114,78 +85,12 @@ func (outbox *OutboxPattern) handleWriteRowsEvent(e *replication.RowsEvent, colu
 	return values, nil
 }
 
-func (outbox *OutboxPattern) loadBinlog(conn *sql.DB) (file string, pos int, err error) {
-	rows, err := conn.Query("show master status")
-
-	if err != nil {
-		return
-	}
-
-	defer rows.Close()
-	columns, err := rows.Columns()
-
-	if err != nil {
-		return
-	}
-
-	colLen := len(columns)
-	dest := make([]interface{}, colLen)
-	dest[0] = &file
-	dest[1] = &pos
-
-	for i := 2; i < colLen; i++ {
-		dest[i] = noopScanner{}
-	}
-
-	rows.Next()
-	err = rows.Scan(dest...)
-
-	if err != nil {
-		return
-	}
-	return
-}
-
-func (outbox *OutboxPattern) findServerId(conn *sql.DB) (serverId int, err error) {
-	rows, err := conn.Query(`SELECT @@server_id`)
-	if err != nil {
-		return
-	}
-
-	defer rows.Close()
-	columns, err := rows.Columns()
-	if err != nil {
-		return
-	}
-
-	colLen := len(columns)
-	dest := make([]interface{}, colLen)
-	dest[0] = &serverId
-
-	for i := 1; i < colLen; i++ {
-		dest[i] = noopScanner{}
-	}
-
-	rows.Next()
-	err = rows.Scan(dest...)
-
-	if err != nil {
-		return
-	}
-	return
-}
-
 func (outbox *OutboxPattern) Close() {
-	outbox.syncer.Close()
+	outbox.streamer.Close()
 }
 
-func (outbox *OutboxPattern) SavePosition() error {
-	pos := outbox.syncer.GetNextPosition()
-	return outbox.savePosition(pos.Name, int(pos.Pos))
-}
-
-func (outbox *OutboxPattern) savePosition(name string, pos int) error {
-	return outbox.Config.Saver.Save(name, pos)
+func (outbox *OutboxPattern) Save() error {
+	return outbox.streamer.Save()
 }
 
 func outboxTableToOutboxInterface(row []interface{}, tableColumns []Column) (*interfaces.Outbox, error) {
