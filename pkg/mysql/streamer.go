@@ -22,9 +22,5 @@ func NewStreamer(ctx context.Context, formatType config.BinlogSaveFormatType, co
 	if err != nil {
 		return
 	}
-	// 読み込んだ現地点を保存する
-	if err = st.Save(); err != nil {
-		return
-	}
 	return
 }
