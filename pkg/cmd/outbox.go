@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"log/slog"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -17,17 +18,31 @@ import (
 func outboxRunCommand() *cobra.Command {
 	var (
 		configFilePath string
+		jsonFormat     bool
 	)
 
 	cmd := cobra.Command{
 		Use: "outbox",
 		Run: func(cmd *cobra.Command, args []string) {
+			var h slog.Handler
+			if jsonFormat {
+				h = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+					Level: slog.LevelDebug,
+				})
+			} else {
+				h = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+					Level: slog.LevelDebug,
+				})
+			}
+			log := slog.New(h)
+			slog.SetDefault(log)
 			ctx := cmd.Context()
 			executeOutbox(ctx, configFilePath)
 		},
 	}
 	flag := cmd.Flags()
 	flag.StringVarP(&configFilePath, "config", "c", "config.yaml", "configuration file path")
+	flag.BoolVar(&jsonFormat, "json", false, "logging json format")
 
 	return &cmd
 }
