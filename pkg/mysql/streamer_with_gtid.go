@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
+	"sync"
 
 	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/logging"
 )
 
 type gTIDStreamer struct {
@@ -15,6 +17,7 @@ type gTIDStreamer struct {
 	streamer *replication.BinlogStreamer
 	syncer   *replication.BinlogSyncer
 	gtid     mysql.GTIDSet
+	mu       sync.RWMutex
 }
 
 var (
@@ -40,7 +43,9 @@ func newGTIDStreamer(ctx context.Context, conf *config.Config) (*gTIDStreamer, e
 	if err != nil {
 		return nil, err
 	}
-	syncer, err := conf.NewBinlogSyncer(serverId)
+	syncer, err := conf.NewBinlogSyncer(serverId,
+		config.WithLogger(logging.NewBinlogLogger()),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +63,18 @@ func newGTIDStreamer(ctx context.Context, conf *config.Config) (*gTIDStreamer, e
 }
 
 func (st *gTIDStreamer) GetEvent(ctx context.Context) (*replication.BinlogEvent, error) {
-	return st.streamer.GetEvent(ctx)
+	ev, err := st.streamer.GetEvent(ctx)
+	if err != nil {
+		return nil, err
+	}
+	switch e := ev.Event.(type) {
+	case *replication.XIDEvent:
+		if e.GSet != nil {
+			st.updateGTID(e.GSet)
+			slog.Info(e.GSet.String())
+		}
+	}
+	return ev, nil
 }
 
 func (st *gTIDStreamer) Close() {
@@ -69,6 +85,12 @@ func (st *gTIDStreamer) Save() error {
 	return st.Config.Saver.Save(config.GTID, config.BinlogSaveFormat{
 		GTID: st.gtid.Encode(),
 	})
+}
+
+func (st *gTIDStreamer) updateGTID(gtid mysql.GTIDSet) {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+	st.gtid = gtid
 }
 
 func loadGTID(conn *sql.DB, conf *config.Config) (gtidSet mysql.GTIDSet, err error) {
