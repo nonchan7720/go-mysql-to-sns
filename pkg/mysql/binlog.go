@@ -2,18 +2,15 @@ package mysql
 
 import (
 	"context"
-	"database/sql"
 
-	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
-	"go.uber.org/multierr"
 )
 
 type Binlog struct {
 	*config.Config
-	pos mysql.Position
+	streamer Streamer
 }
 
 func NewBinlog(ctx context.Context, config *config.Config) (*Binlog, error) {
@@ -29,40 +26,12 @@ func (binlog *Binlog) Run(ctx context.Context, value chan interfaces.Payload) (e
 		return err
 	}
 	defer conn.Close()
-	var (
-		file string
-		pos  int
-	)
-	if f, p, loadErr := binlog.Config.Saver.Load(); loadErr == nil {
-		file = f
-		pos = p
-	}
-	if file == "" && pos == 0 {
-		file, pos, err = binlog.loadBinlog(conn)
-		if err != nil {
-			return
-		}
-	}
 	info := NewTableInfo(conn)
-	serverId, err := binlog.findServerId(conn)
+	streamer, err := NewStreamer(ctx, config.Position, binlog.Config)
 	if err != nil {
 		return err
 	}
-	syncer, err := binlog.NewBinlogSyncer(serverId)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		pos := syncer.GetNextPosition()
-		if saveErr := binlog.Config.Saver.Save(pos.Name, int(pos.Pos)); saveErr != nil {
-			err = multierr.Append(err, saveErr)
-		}
-		syncer.Close()
-	}()
-	streamer, err := syncer.StartSync(mysql.Position{Name: file, Pos: uint32(pos)})
-	if err != nil {
-		return err
-	}
+	binlog.streamer = streamer
 
 	for {
 		ev, err := streamer.GetEvent(ctx)
@@ -156,69 +125,8 @@ func (binlog *Binlog) handleDeleteRowsEvent(e *replication.RowsEvent, info *Tabl
 	return &payload, nil
 }
 
-func (binlog *Binlog) loadBinlog(conn *sql.DB) (file string, pos int, err error) {
-	rows, err := conn.Query("show master status")
-
-	if err != nil {
-		return
-	}
-
-	defer rows.Close()
-	columns, err := rows.Columns()
-
-	if err != nil {
-		return
-	}
-
-	colLen := len(columns)
-	dest := make([]interface{}, colLen)
-	dest[0] = &file
-	dest[1] = &pos
-
-	for i := 2; i < colLen; i++ {
-		dest[i] = noopScanner{}
-	}
-
-	rows.Next()
-	err = rows.Scan(dest...)
-
-	if err != nil {
-		return
-	}
-	return
-}
-
-func (binlog *Binlog) findServerId(conn *sql.DB) (serverId int, err error) {
-	rows, err := conn.Query(`SELECT @@server_id`)
-	if err != nil {
-		return
-	}
-
-	defer rows.Close()
-	columns, err := rows.Columns()
-	if err != nil {
-		return
-	}
-
-	colLen := len(columns)
-	dest := make([]interface{}, colLen)
-	dest[0] = &serverId
-
-	for i := 1; i < colLen; i++ {
-		dest[i] = noopScanner{}
-	}
-
-	rows.Next()
-	err = rows.Scan(dest...)
-
-	if err != nil {
-		return
-	}
-	return
-}
-
-func (binlog *Binlog) SavePosition(fn func(file string, position int)) {
-	fn(binlog.pos.Name, int(binlog.pos.Pos))
+func (binlog *Binlog) Save() error {
+	return binlog.streamer.Save()
 }
 
 func binlogRowToPayloadRow(row []interface{}, tableColumns []Column) interfaces.Row {

@@ -1,7 +1,7 @@
 package config
 
 type Outbox struct {
-	Config         `yaml:",inline"`
+	*Config        `yaml:",inline"`
 	TransformTable `yaml:"outbox"`
 }
 

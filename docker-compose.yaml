@@ -17,7 +17,7 @@ services:
     command: '--default-authentication-plugin=mysql_native_password'
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: mysql
+      MYSQL_DATABASE: db
       MYSQL_USER: admin
       MYSQL_PASSWORD: pass1234
       TZ: Asia/Tokyo
@@ -36,6 +36,48 @@ services:
       retries: 10
     networks:
       - default
+  replica:
+    image: mysql:8.0
+    platform: linux/x86_64
+    command: "--default-authentication-plugin=mysql_native_password"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: pass1234
+      TZ: Asia/Tokyo
+    volumes:
+      - mysql_replica:/var/lib/mysql
+      - ./mysql/replica.cnf:/etc/mysql/conf.d/my.cnf
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+      timeout: 20s
+      retries: 10
+    depends_on:
+      db:
+        condition: service_healthy
+  replication-setting:
+    image: mysql:8.0
+    platform: linux/x86_64
+    entrypoint: ""
+    volumes:
+      - ./mysql/primary.sql:/docker-entrypoint-initdb.d/primary.sql
+      - ./mysql/replica.sql:/docker-entrypoint-initdb.d/replica.sql
+      - ./mysql/replication.sh:/docker-entrypoint-initdb.d/replication.sh
+    command:
+      - sh
+      - -c
+      - chmod +x /docker-entrypoint-initdb.d/replication.sh && /docker-entrypoint-initdb.d/replication.sh
+    depends_on:
+      db:
+        condition: service_healthy
+      replica:
+        condition: service_healthy
   localstack:
     image: localstack/localstack:2.3.2
     environment:
@@ -61,5 +103,6 @@ services:
 volumes:
   mysql:
   localstack:
+  mysql_replica:
 networks:
   default:

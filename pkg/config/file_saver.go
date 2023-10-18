@@ -1,40 +1,46 @@
 package config
 
 import (
+	"errors"
 	"os"
+)
 
-	"gopkg.in/yaml.v3"
+var (
+	ErrUnsupportedBinlogFormat = errors.New("Unsupported type.")
 )
 
 type FileSaver struct {
 	Name string `yaml:"name"`
 }
 
-type fileValue struct {
-	File     string `yaml:"file"`
-	Position int    `yaml:"position"`
-}
-
-func (s *FileSaver) Save(file string, position int) error {
+func (s *FileSaver) Save(typ BinlogSaveFormatType, format BinlogSaveFormat) error {
 	f, err := os.Create(s.Name)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	value := fileValue{
-		File:     file,
-		Position: position,
+	switch typ {
+	case Position:
+		return positionSaver{}.save(f, format)
+	case GTID:
+		return gtidSaver{}.save(f, format)
+	default:
+		return ErrUnsupportedBinlogFormat
 	}
-	return yaml.NewEncoder(f).Encode(&value)
 }
 
-func (s *FileSaver) Load() (file string, position int, err error) {
-	var value fileValue
+func (s *FileSaver) Load(typ BinlogSaveFormatType) (format *BinlogSaveFormat, err error) {
 	f, err := os.Open(s.Name)
 	if err != nil {
 		return
 	}
 	defer f.Close()
-	err = yaml.NewDecoder(f).Decode(&value)
-	return value.File, value.Position, err
+	switch typ {
+	case Position:
+		return positionSaver{}.load(f)
+	case GTID:
+		return gtidSaver{}.load(f)
+	default:
+		return nil, ErrUnsupportedBinlogFormat
+	}
 }

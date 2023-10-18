@@ -68,7 +68,7 @@ func (c *Config) Connect(ctx context.Context) (*sql.DB, error) {
 	return conn, nil
 }
 
-func (c *Config) NewBinlogSyncer(serverId int) (*replication.BinlogSyncer, error) {
+func (c *Config) NewBinlogSyncer(serverId int, opts ...Option) (*replication.BinlogSyncer, error) {
 	var dialFunc client.Dialer
 	if c.Database.SSHTunnel {
 		sshClient, err := c.SSH.Conn()
@@ -89,6 +89,9 @@ func (c *Config) NewBinlogSyncer(serverId int) (*replication.BinlogSyncer, error
 		Password:  c.Database.Password,
 		Dialer:    dialFunc,
 		TLSConfig: c.Database.Tls(),
+	}
+	for _, opt := range opts {
+		opt.apply(&cfg)
 	}
 	return replication.NewBinlogSyncer(cfg), nil
 }

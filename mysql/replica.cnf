@@ -2,8 +2,10 @@
 character-set-server=utf8mb4
 collation-server=utf8mb4_bin
 sql_mode=TRADITIONAL,NO_AUTO_VALUE_ON_ZERO,ONLY_FULL_GROUP_BY
-server-id=1
+server-id=2
+relay-log=/var/run/mysqld/mysql-relay-bin.log
 log_bin=/var/run/mysqld/mysql-bin.log
+read_only=on
 gtid_mode=on
 enforce_gtid_consistency=on
 log_slave_updates=on

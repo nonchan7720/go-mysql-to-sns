@@ -14,10 +14,10 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/siddontang/go-log v0.0.0-20190221022429-1e957dd83bed
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.0
 	github.com/valyala/fasttemplate v1.2.2
-	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.14.0
 	golang.org/x/sync v0.4.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -39,7 +39,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726 // indirect
-	github.com/siddontang/go-log v0.0.0-20190221022429-1e957dd83bed // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
