@@ -1,8 +1,8 @@
 outbox:
-  schema: mysql
+  schema: db
   tableName: outbox
 database:
-  host: db
+  host: replica
   port: 3306
   username: admin
   password: pass1234

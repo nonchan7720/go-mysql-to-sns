@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
+	"os"
 	"sync"
 
 	"github.com/go-mysql-org/go-mysql/mysql"
@@ -45,6 +46,7 @@ func newGTIDStreamer(ctx context.Context, conf *config.Config) (*gTIDStreamer, e
 	}
 	syncer, err := conf.NewBinlogSyncer(serverId,
 		config.WithLogger(logging.NewBinlogLogger()),
+		config.WithDisableRetrySync(), // リトライしない
 	)
 	if err != nil {
 		return nil, err
@@ -68,6 +70,10 @@ func (st *gTIDStreamer) GetEvent(ctx context.Context) (*replication.BinlogEvent,
 		return nil, err
 	}
 	switch e := ev.Event.(type) {
+	case *replication.RowsEvent:
+		e.Dump(os.Stdout)
+	case *replication.GTIDEvent:
+		e.Dump(os.Stdout)
 	case *replication.XIDEvent:
 		if e.GSet != nil {
 			st.updateGTID(e.GSet)
@@ -100,7 +106,7 @@ func loadGTID(conn *sql.DB, conf *config.Config) (gtidSet mysql.GTIDSet, err err
 		gtid = format.GTID
 	}
 	if len(gtid) == 0 {
-		v, err := loadBinlogGTID(conn)
+		v, err := loadGlobalBinlogGTID(conn)
 		if err != nil {
 			return nil, err
 		}

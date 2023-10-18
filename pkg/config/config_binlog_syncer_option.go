@@ -38,3 +38,15 @@ func WithFlavorForMariaDB() Option {
 		cfg.Flavor = "mariadb"
 	})
 }
+
+func WithDisableRetrySync() Option {
+	return optionFn(func(cfg *replication.BinlogSyncerConfig) {
+		cfg.DisableRetrySync = true
+	})
+}
+
+func WithMaxReconnectAttempts(value int) Option {
+	return optionFn(func(cfg *replication.BinlogSyncerConfig) {
+		cfg.MaxReconnectAttempts = value
+	})
+}

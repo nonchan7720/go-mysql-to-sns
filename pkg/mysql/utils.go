@@ -93,3 +93,34 @@ func loadBinlogGTID(conn *sql.DB) (gtid string, err error) {
 	}
 	return
 }
+
+func loadGlobalBinlogGTID(conn *sql.DB) (gtid string, err error) {
+	rows, err := conn.Query("select @@GLOBAL.gtid_executed")
+
+	if err != nil {
+		return
+	}
+
+	defer rows.Close()
+	columns, err := rows.Columns()
+
+	if err != nil {
+		return
+	}
+
+	colLen := len(columns)
+	dest := make([]interface{}, colLen)
+	dest[0] = &gtid
+
+	for i := 0; i < colLen-1; i++ {
+		dest[i] = noopScanner{}
+	}
+
+	rows.Next()
+	err = rows.Scan(dest...)
+
+	if err != nil {
+		return
+	}
+	return
+}
