@@ -84,15 +84,11 @@ func (p *awsSQS) PublishBinlog(ctx context.Context, event interfaces.Event, payl
 	}
 }
 
-func (p *awsSQS) PublishOutbox(ctx context.Context, outbox interfaces.Outbox) (string, error) {
-	queue, err := p.conf.SQS.FindOutboxQueue(outbox.AggregateType)
-	if err != nil {
-		return "", err
-	}
+func (p *awsSQS) PublishOutbox(ctx context.Context, producer string, outbox interfaces.Outbox) (string, error) {
 	input := &sqs.SendMessageInput{
 		MessageBody:    originAWS.String(outbox.Payload),
 		MessageGroupId: originAWS.String(outbox.AggregateId),
-		QueueUrl:       originAWS.String(queue.QueueUrl),
+		QueueUrl:       originAWS.String(producer),
 		MessageAttributes: map[string]types.MessageAttributeValue{
 			"Event": {
 				DataType:    originAWS.String("String"),

@@ -376,11 +376,9 @@ func TestAWSSNSWithOutbox(t *testing.T) {
 		{
 			name: "AggregateType OK",
 			outbox: interfaces.Outbox{
-				ID:            1,
-				AggregateType: "topic-sns",
-				AggregateId:   "xxx",
-				EventType:     "create",
-				Payload:       `{"key":"value"}`,
+				AggregateId: "xxx",
+				EventType:   "create",
+				Payload:     `{"key":"value"}`,
 			},
 			topic: config.Topic{
 				Transform: config.Transform{
@@ -417,38 +415,6 @@ func TestAWSSNSWithOutbox(t *testing.T) {
 				require.NoError(err)
 			},
 		},
-		{
-			name: "AggregateType NG",
-			outbox: interfaces.Outbox{
-				ID:            1,
-				AggregateType: "topic-ng",
-				AggregateId:   "xxx",
-				EventType:     "create",
-				Payload:       `{"key":"value"}`,
-			},
-			topic: config.Topic{
-				Transform: config.Transform{
-					Type: config.OutboxPatternType,
-					Outbox: &config.TransformOutbox{
-						AggregateType: "topic-sns",
-					},
-				},
-				TopicArn: "arn:aws:sns:ap-northeast-1:000000000000:test-sns",
-			},
-			fn: func(client *mockAws.MockSNSClient, require *require.Assertions) {
-				output := &sns.PublishOutput{
-					MessageId: aws.String(uuid.NewString()),
-				}
-				client.EXPECT().
-					Publish(gomock.Any(), gomock.Any()).
-					Do(func(ctx context.Context, input *sns.PublishInput, optFns ...func(*sns.Options)) {}).
-					Return(output, nil).Times(0)
-			},
-			expect: func(require *require.Assertions, msgId string, err error) {
-				require.Empty(msgId)
-				require.Error(err)
-			},
-		},
 	}
 	ctx := context.Background()
 	mockCtl := gomock.NewController(t)
@@ -467,7 +433,7 @@ func TestAWSSNSWithOutbox(t *testing.T) {
 				},
 			}
 			p := newAWSSNS(ctx, client, &conf)
-			msgId, err := p.PublishOutbox(ctx, tbl.outbox)
+			msgId, err := p.PublishOutbox(ctx, tbl.topic.TopicArn, tbl.outbox)
 			tbl.expect(require, msgId, err)
 		})
 	}

@@ -84,15 +84,11 @@ func (p *awsSNS) PublishBinlog(ctx context.Context, event interfaces.Event, payl
 	}
 }
 
-func (p *awsSNS) PublishOutbox(ctx context.Context, outbox interfaces.Outbox) (string, error) {
-	topic, err := p.conf.SNS.FindOutboxTopic(outbox.AggregateType)
-	if err != nil {
-		return "", err
-	}
+func (p *awsSNS) PublishOutbox(ctx context.Context, producer string, outbox interfaces.Outbox) (string, error) {
 	input := &sns.PublishInput{
 		Message:        originAWS.String(outbox.Payload),
 		MessageGroupId: originAWS.String(outbox.AggregateId),
-		TargetArn:      originAWS.String(topic.TopicArn),
+		TargetArn:      originAWS.String(producer),
 		MessageAttributes: map[string]types.MessageAttributeValue{
 			"Event": {
 				DataType:    originAWS.String("String"),
