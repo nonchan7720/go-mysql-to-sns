@@ -399,6 +399,16 @@ func RetryCountLTE(v int) predicate.Outbox {
 	return predicate.Outbox(sql.FieldLTE(FieldRetryCount, v))
 }
 
+// RetryCountIsNil applies the IsNil predicate on the "retry_count" field.
+func RetryCountIsNil() predicate.Outbox {
+	return predicate.Outbox(sql.FieldIsNull(FieldRetryCount))
+}
+
+// RetryCountNotNil applies the NotNil predicate on the "retry_count" field.
+func RetryCountNotNil() predicate.Outbox {
+	return predicate.Outbox(sql.FieldNotNull(FieldRetryCount))
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Outbox) predicate.Outbox {
 	return predicate.Outbox(sql.AndPredicates(predicates...))

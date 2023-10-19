@@ -56,6 +56,14 @@ func (oc *OutboxCreate) SetRetryCount(i int) *OutboxCreate {
 	return oc
 }
 
+// SetNillableRetryCount sets the "retry_count" field if the given value is not nil.
+func (oc *OutboxCreate) SetNillableRetryCount(i *int) *OutboxCreate {
+	if i != nil {
+		oc.SetRetryCount(*i)
+	}
+	return oc
+}
+
 // SetID sets the "id" field.
 func (oc *OutboxCreate) SetID(i int64) *OutboxCreate {
 	oc.mutation.SetID(i)
@@ -111,9 +119,6 @@ func (oc *OutboxCreate) check() error {
 	if _, ok := oc.mutation.RetryAt(); !ok {
 		return &ValidationError{Name: "retry_at", err: errors.New(`ent: missing required field "Outbox.retry_at"`)}
 	}
-	if _, ok := oc.mutation.RetryCount(); !ok {
-		return &ValidationError{Name: "retry_count", err: errors.New(`ent: missing required field "Outbox.retry_count"`)}
-	}
 	return nil
 }
 
@@ -168,7 +173,7 @@ func (oc *OutboxCreate) createSpec() (*Outbox, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := oc.mutation.RetryCount(); ok {
 		_spec.SetField(outbox.FieldRetryCount, field.TypeInt, value)
-		_node.RetryCount = &value
+		_node.RetryCount = value
 	}
 	return _node, _spec
 }

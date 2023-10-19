@@ -50,7 +50,7 @@ func (Outbox) Fields() []ent.Field {
 		field.Time("retry_at").
 			Nillable(),
 		field.Int("retry_count").
-			Nillable(),
+			Optional(),
 	}
 }
 

@@ -348,7 +348,7 @@ func (m *OutboxMutation) RetryCount() (r int, exists bool) {
 // OldRetryCount returns the old "retry_count" field's value of the Outbox entity.
 // If the Outbox object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *OutboxMutation) OldRetryCount(ctx context.Context) (v *int, err error) {
+func (m *OutboxMutation) OldRetryCount(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRetryCount is only allowed on UpdateOne operations")
 	}
@@ -380,10 +380,24 @@ func (m *OutboxMutation) AddedRetryCount() (r int, exists bool) {
 	return *v, true
 }
 
+// ClearRetryCount clears the value of the "retry_count" field.
+func (m *OutboxMutation) ClearRetryCount() {
+	m.retry_count = nil
+	m.addretry_count = nil
+	m.clearedFields[outbox.FieldRetryCount] = struct{}{}
+}
+
+// RetryCountCleared returns if the "retry_count" field was cleared in this mutation.
+func (m *OutboxMutation) RetryCountCleared() bool {
+	_, ok := m.clearedFields[outbox.FieldRetryCount]
+	return ok
+}
+
 // ResetRetryCount resets all changes to the "retry_count" field.
 func (m *OutboxMutation) ResetRetryCount() {
 	m.retry_count = nil
 	m.addretry_count = nil
+	delete(m.clearedFields, outbox.FieldRetryCount)
 }
 
 // Where appends a list predicates to the OutboxMutation builder.
@@ -575,7 +589,11 @@ func (m *OutboxMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *OutboxMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(outbox.FieldRetryCount) {
+		fields = append(fields, outbox.FieldRetryCount)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -588,6 +606,11 @@ func (m *OutboxMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *OutboxMutation) ClearField(name string) error {
+	switch name {
+	case outbox.FieldRetryCount:
+		m.ClearRetryCount()
+		return nil
+	}
 	return fmt.Errorf("unknown Outbox nullable field %s", name)
 }
 

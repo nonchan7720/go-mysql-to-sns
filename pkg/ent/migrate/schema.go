@@ -17,7 +17,7 @@ var (
 		{Name: "event", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(255)"}},
 		{Name: "payload", Type: field.TypeBytes, SchemaType: map[string]string{"mysql": "json"}},
 		{Name: "retry_at", Type: field.TypeTime},
-		{Name: "retry_count", Type: field.TypeInt},
+		{Name: "retry_count", Type: field.TypeInt, Nullable: true},
 	}
 	// OutboxTable holds the schema information for the "outbox" table.
 	OutboxTable = &schema.Table{

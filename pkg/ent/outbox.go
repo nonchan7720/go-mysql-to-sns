@@ -28,7 +28,7 @@ type Outbox struct {
 	// RetryAt holds the value of the "retry_at" field.
 	RetryAt *time.Time `json:"retry_at,omitempty"`
 	// RetryCount holds the value of the "retry_count" field.
-	RetryCount   *int `json:"retry_count,omitempty"`
+	RetryCount   int `json:"retry_count,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -101,8 +101,7 @@ func (o *Outbox) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field retry_count", values[i])
 			} else if value.Valid {
-				o.RetryCount = new(int)
-				*o.RetryCount = int(value.Int64)
+				o.RetryCount = int(value.Int64)
 			}
 		default:
 			o.selectValues.Set(columns[i], values[i])
@@ -157,10 +156,8 @@ func (o *Outbox) String() string {
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
-	if v := o.RetryCount; v != nil {
-		builder.WriteString("retry_count=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
+	builder.WriteString("retry_count=")
+	builder.WriteString(fmt.Sprintf("%v", o.RetryCount))
 	builder.WriteByte(')')
 	return builder.String()
 }

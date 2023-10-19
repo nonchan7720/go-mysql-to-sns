@@ -65,9 +65,23 @@ func (ou *OutboxUpdate) SetRetryCount(i int) *OutboxUpdate {
 	return ou
 }
 
+// SetNillableRetryCount sets the "retry_count" field if the given value is not nil.
+func (ou *OutboxUpdate) SetNillableRetryCount(i *int) *OutboxUpdate {
+	if i != nil {
+		ou.SetRetryCount(*i)
+	}
+	return ou
+}
+
 // AddRetryCount adds i to the "retry_count" field.
 func (ou *OutboxUpdate) AddRetryCount(i int) *OutboxUpdate {
 	ou.mutation.AddRetryCount(i)
+	return ou
+}
+
+// ClearRetryCount clears the value of the "retry_count" field.
+func (ou *OutboxUpdate) ClearRetryCount() *OutboxUpdate {
+	ou.mutation.ClearRetryCount()
 	return ou
 }
 
@@ -133,6 +147,9 @@ func (ou *OutboxUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ou.mutation.AddedRetryCount(); ok {
 		_spec.AddField(outbox.FieldRetryCount, field.TypeInt, value)
 	}
+	if ou.mutation.RetryCountCleared() {
+		_spec.ClearField(outbox.FieldRetryCount, field.TypeInt)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ou.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{outbox.Label}
@@ -190,9 +207,23 @@ func (ouo *OutboxUpdateOne) SetRetryCount(i int) *OutboxUpdateOne {
 	return ouo
 }
 
+// SetNillableRetryCount sets the "retry_count" field if the given value is not nil.
+func (ouo *OutboxUpdateOne) SetNillableRetryCount(i *int) *OutboxUpdateOne {
+	if i != nil {
+		ouo.SetRetryCount(*i)
+	}
+	return ouo
+}
+
 // AddRetryCount adds i to the "retry_count" field.
 func (ouo *OutboxUpdateOne) AddRetryCount(i int) *OutboxUpdateOne {
 	ouo.mutation.AddRetryCount(i)
+	return ouo
+}
+
+// ClearRetryCount clears the value of the "retry_count" field.
+func (ouo *OutboxUpdateOne) ClearRetryCount() *OutboxUpdateOne {
+	ouo.mutation.ClearRetryCount()
 	return ouo
 }
 
@@ -287,6 +318,9 @@ func (ouo *OutboxUpdateOne) sqlSave(ctx context.Context) (_node *Outbox, err err
 	}
 	if value, ok := ouo.mutation.AddedRetryCount(); ok {
 		_spec.AddField(outbox.FieldRetryCount, field.TypeInt, value)
+	}
+	if ouo.mutation.RetryCountCleared() {
+		_spec.ClearField(outbox.FieldRetryCount, field.TypeInt)
 	}
 	_node = &Outbox{config: ouo.config}
 	_spec.Assign = _node.assignValues
