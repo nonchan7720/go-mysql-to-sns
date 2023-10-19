@@ -39,6 +39,14 @@ func (sns *SNS) FindOutboxTopic(aggregateType string) (Topic, error) {
 	return Topic{}, ErrNotFoundAggregateTypeTopic
 }
 
+func (sns *SNS) FindOutboxTopicArn(aggregateType string) (string, error) {
+	t, err := sns.FindOutboxTopic(aggregateType)
+	if err != nil {
+		return "", err
+	}
+	return t.TopicArn, nil
+}
+
 type Topic struct {
 	TopicArn               string       `yaml:"topicArn"`
 	MessageGroupIdTemplate string       `yaml:"messageGroupIdTemplate"`

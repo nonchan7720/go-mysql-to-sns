@@ -39,6 +39,14 @@ func (sqs *SQS) FindOutboxQueue(aggregateType string) (Queue, error) {
 	return Queue{}, ErrNotFoundAggregateTypeTopic
 }
 
+func (sqs *SQS) FindOutboxQueueUrl(aggregateType string) (string, error) {
+	q, err := sqs.FindOutboxQueue(aggregateType)
+	if err != nil {
+		return "", err
+	}
+	return q.QueueUrl, nil
+}
+
 type Queue struct {
 	QueueName              string       `yaml:"queueName"`
 	QueueUrl               string       `yaml:"queueUrl"`
