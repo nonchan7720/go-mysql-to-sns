@@ -11,7 +11,6 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/schema"
 )
 
 // OutboxCreate is the builder for creating a Outbox entity.
@@ -40,8 +39,8 @@ func (oc *OutboxCreate) SetEvent(s string) *OutboxCreate {
 }
 
 // SetPayload sets the "payload" field.
-func (oc *OutboxCreate) SetPayload(s *schema.JSON) *OutboxCreate {
-	oc.mutation.SetPayload(s)
+func (oc *OutboxCreate) SetPayload(b []byte) *OutboxCreate {
+	oc.mutation.SetPayload(b)
 	return oc
 }
 
@@ -160,7 +159,7 @@ func (oc *OutboxCreate) createSpec() (*Outbox, *sqlgraph.CreateSpec) {
 		_node.Event = value
 	}
 	if value, ok := oc.mutation.Payload(); ok {
-		_spec.SetField(outbox.FieldPayload, field.TypeJSON, value)
+		_spec.SetField(outbox.FieldPayload, field.TypeBytes, value)
 		_node.Payload = value
 	}
 	if value, ok := oc.mutation.RetryAt(); ok {

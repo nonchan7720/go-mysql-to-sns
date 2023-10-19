@@ -13,7 +13,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/predicate"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/schema"
 )
 
 const (
@@ -37,7 +36,7 @@ type OutboxMutation struct {
 	aggregate_type *string
 	aggregate_id   *string
 	event          *string
-	payload        **schema.JSON
+	payload        *[]byte
 	retry_at       *time.Time
 	retry_count    *int
 	addretry_count *int
@@ -260,12 +259,12 @@ func (m *OutboxMutation) ResetEvent() {
 }
 
 // SetPayload sets the "payload" field.
-func (m *OutboxMutation) SetPayload(s *schema.JSON) {
-	m.payload = &s
+func (m *OutboxMutation) SetPayload(b []byte) {
+	m.payload = &b
 }
 
 // Payload returns the value of the "payload" field in the mutation.
-func (m *OutboxMutation) Payload() (r *schema.JSON, exists bool) {
+func (m *OutboxMutation) Payload() (r []byte, exists bool) {
 	v := m.payload
 	if v == nil {
 		return
@@ -276,7 +275,7 @@ func (m *OutboxMutation) Payload() (r *schema.JSON, exists bool) {
 // OldPayload returns the old "payload" field's value of the Outbox entity.
 // If the Outbox object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *OutboxMutation) OldPayload(ctx context.Context) (v *schema.JSON, err error) {
+func (m *OutboxMutation) OldPayload(ctx context.Context) (v []byte, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPayload is only allowed on UpdateOne operations")
 	}
@@ -512,7 +511,7 @@ func (m *OutboxMutation) SetField(name string, value ent.Value) error {
 		m.SetEvent(v)
 		return nil
 	case outbox.FieldPayload:
-		v, ok := value.(*schema.JSON)
+		v, ok := value.([]byte)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

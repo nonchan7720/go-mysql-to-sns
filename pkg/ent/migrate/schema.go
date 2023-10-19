@@ -3,32 +3,36 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
 
 var (
-	// OutboxesColumns holds the columns for the "outboxes" table.
-	OutboxesColumns = []*schema.Column{
+	// OutboxColumns holds the columns for the "outbox" table.
+	OutboxColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "aggregate_type", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(255)"}},
 		{Name: "aggregate_id", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(128)"}},
 		{Name: "event", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(255)"}},
-		{Name: "payload", Type: field.TypeJSON},
+		{Name: "payload", Type: field.TypeBytes, SchemaType: map[string]string{"mysql": "json"}},
 		{Name: "retry_at", Type: field.TypeTime},
 		{Name: "retry_count", Type: field.TypeInt},
 	}
-	// OutboxesTable holds the schema information for the "outboxes" table.
-	OutboxesTable = &schema.Table{
-		Name:       "outboxes",
-		Columns:    OutboxesColumns,
-		PrimaryKey: []*schema.Column{OutboxesColumns[0]},
+	// OutboxTable holds the schema information for the "outbox" table.
+	OutboxTable = &schema.Table{
+		Name:       "outbox",
+		Columns:    OutboxColumns,
+		PrimaryKey: []*schema.Column{OutboxColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		OutboxesTable,
+		OutboxTable,
 	}
 )
 
 func init() {
+	OutboxTable.Annotation = &entsql.Annotation{
+		Table: "outbox",
+	}
 }

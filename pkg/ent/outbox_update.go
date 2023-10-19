@@ -13,7 +13,6 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/predicate"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/schema"
 )
 
 // OutboxUpdate is the builder for updating Outbox entities.
@@ -48,8 +47,8 @@ func (ou *OutboxUpdate) SetEvent(s string) *OutboxUpdate {
 }
 
 // SetPayload sets the "payload" field.
-func (ou *OutboxUpdate) SetPayload(s *schema.JSON) *OutboxUpdate {
-	ou.mutation.SetPayload(s)
+func (ou *OutboxUpdate) SetPayload(b []byte) *OutboxUpdate {
+	ou.mutation.SetPayload(b)
 	return ou
 }
 
@@ -123,7 +122,7 @@ func (ou *OutboxUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(outbox.FieldEvent, field.TypeString, value)
 	}
 	if value, ok := ou.mutation.Payload(); ok {
-		_spec.SetField(outbox.FieldPayload, field.TypeJSON, value)
+		_spec.SetField(outbox.FieldPayload, field.TypeBytes, value)
 	}
 	if value, ok := ou.mutation.RetryAt(); ok {
 		_spec.SetField(outbox.FieldRetryAt, field.TypeTime, value)
@@ -173,8 +172,8 @@ func (ouo *OutboxUpdateOne) SetEvent(s string) *OutboxUpdateOne {
 }
 
 // SetPayload sets the "payload" field.
-func (ouo *OutboxUpdateOne) SetPayload(s *schema.JSON) *OutboxUpdateOne {
-	ouo.mutation.SetPayload(s)
+func (ouo *OutboxUpdateOne) SetPayload(b []byte) *OutboxUpdateOne {
+	ouo.mutation.SetPayload(b)
 	return ouo
 }
 
@@ -278,7 +277,7 @@ func (ouo *OutboxUpdateOne) sqlSave(ctx context.Context) (_node *Outbox, err err
 		_spec.SetField(outbox.FieldEvent, field.TypeString, value)
 	}
 	if value, ok := ouo.mutation.Payload(); ok {
-		_spec.SetField(outbox.FieldPayload, field.TypeJSON, value)
+		_spec.SetField(outbox.FieldPayload, field.TypeBytes, value)
 	}
 	if value, ok := ouo.mutation.RetryAt(); ok {
 		_spec.SetField(outbox.FieldRetryAt, field.TypeTime, value)

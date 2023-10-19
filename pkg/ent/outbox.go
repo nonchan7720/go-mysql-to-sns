@@ -3,7 +3,6 @@
 package ent
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -11,7 +10,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/schema"
 )
 
 // Outbox is the model entity for the Outbox schema.
@@ -26,7 +24,7 @@ type Outbox struct {
 	// Event holds the value of the "event" field.
 	Event string `json:"event,omitempty"`
 	// Payload holds the value of the "payload" field.
-	Payload *schema.JSON `json:"payload,omitempty"`
+	Payload []byte `json:"payload,omitempty"`
 	// RetryAt holds the value of the "retry_at" field.
 	RetryAt *time.Time `json:"retry_at,omitempty"`
 	// RetryCount holds the value of the "retry_count" field.
@@ -89,10 +87,8 @@ func (o *Outbox) assignValues(columns []string, values []any) error {
 		case outbox.FieldPayload:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field payload", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &o.Payload); err != nil {
-					return fmt.Errorf("unmarshal field payload: %w", err)
-				}
+			} else if value != nil {
+				o.Payload = *value
 			}
 		case outbox.FieldRetryAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {

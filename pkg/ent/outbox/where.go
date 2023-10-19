@@ -69,6 +69,11 @@ func Event(v string) predicate.Outbox {
 	return predicate.Outbox(sql.FieldEQ(FieldEvent, v))
 }
 
+// Payload applies equality check predicate on the "payload" field. It's identical to PayloadEQ.
+func Payload(v []byte) predicate.Outbox {
+	return predicate.Outbox(sql.FieldEQ(FieldPayload, v))
+}
+
 // RetryAt applies equality check predicate on the "retry_at" field. It's identical to RetryAtEQ.
 func RetryAt(v time.Time) predicate.Outbox {
 	return predicate.Outbox(sql.FieldEQ(FieldRetryAt, v))
@@ -272,6 +277,46 @@ func EventEqualFold(v string) predicate.Outbox {
 // EventContainsFold applies the ContainsFold predicate on the "event" field.
 func EventContainsFold(v string) predicate.Outbox {
 	return predicate.Outbox(sql.FieldContainsFold(FieldEvent, v))
+}
+
+// PayloadEQ applies the EQ predicate on the "payload" field.
+func PayloadEQ(v []byte) predicate.Outbox {
+	return predicate.Outbox(sql.FieldEQ(FieldPayload, v))
+}
+
+// PayloadNEQ applies the NEQ predicate on the "payload" field.
+func PayloadNEQ(v []byte) predicate.Outbox {
+	return predicate.Outbox(sql.FieldNEQ(FieldPayload, v))
+}
+
+// PayloadIn applies the In predicate on the "payload" field.
+func PayloadIn(vs ...[]byte) predicate.Outbox {
+	return predicate.Outbox(sql.FieldIn(FieldPayload, vs...))
+}
+
+// PayloadNotIn applies the NotIn predicate on the "payload" field.
+func PayloadNotIn(vs ...[]byte) predicate.Outbox {
+	return predicate.Outbox(sql.FieldNotIn(FieldPayload, vs...))
+}
+
+// PayloadGT applies the GT predicate on the "payload" field.
+func PayloadGT(v []byte) predicate.Outbox {
+	return predicate.Outbox(sql.FieldGT(FieldPayload, v))
+}
+
+// PayloadGTE applies the GTE predicate on the "payload" field.
+func PayloadGTE(v []byte) predicate.Outbox {
+	return predicate.Outbox(sql.FieldGTE(FieldPayload, v))
+}
+
+// PayloadLT applies the LT predicate on the "payload" field.
+func PayloadLT(v []byte) predicate.Outbox {
+	return predicate.Outbox(sql.FieldLT(FieldPayload, v))
+}
+
+// PayloadLTE applies the LTE predicate on the "payload" field.
+func PayloadLTE(v []byte) predicate.Outbox {
+	return predicate.Outbox(sql.FieldLTE(FieldPayload, v))
 }
 
 // RetryAtEQ applies the EQ predicate on the "retry_at" field.

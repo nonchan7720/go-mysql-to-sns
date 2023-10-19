@@ -24,7 +24,7 @@ const (
 	// FieldRetryCount holds the string denoting the retry_count field in the database.
 	FieldRetryCount = "retry_count"
 	// Table holds the table name of the outbox in the database.
-	Table = "outboxes"
+	Table = "outbox"
 )
 
 // Columns holds all SQL columns for outbox fields.
