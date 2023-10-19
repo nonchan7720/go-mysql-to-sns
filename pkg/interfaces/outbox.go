@@ -5,3 +5,8 @@ type Outbox struct {
 	EventType   string `json:"event_type"`
 	Payload     string `json:"payload"`
 }
+
+type BinlogOutbox struct {
+	Outbox   Outbox
+	Producer string
+}
