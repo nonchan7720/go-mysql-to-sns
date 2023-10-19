@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"log/slog"
 	"strings"
 
 	"github.com/go-mysql-org/go-mysql/mysql"
@@ -25,7 +26,7 @@ func NewOutboxPattern(ctx context.Context, config *config.Outbox) (*OutboxPatter
 	return outbox, nil
 }
 
-func (outbox *OutboxPattern) Run(ctx context.Context, value chan interfaces.Outbox) (err error) {
+func (outbox *OutboxPattern) Run(ctx context.Context, value chan interfaces.BinlogOutbox) (err error) {
 	conn, err := outbox.Connect(ctx)
 	if err != nil {
 		return
@@ -68,7 +69,6 @@ func (outbox *OutboxPattern) Run(ctx context.Context, value chan interfaces.Outb
 	if err != nil {
 		return err
 	}
-
 	for {
 		ev, err := streamer.GetEvent(ctx)
 		if err != nil {
@@ -78,7 +78,7 @@ func (outbox *OutboxPattern) Run(ctx context.Context, value chan interfaces.Outb
 			return err
 		}
 		var (
-			values []*interfaces.Outbox
+			values []*tOutbox
 			evErr  error
 		)
 		switch ev.Header.EventType {
@@ -96,14 +96,26 @@ func (outbox *OutboxPattern) Run(ctx context.Context, value chan interfaces.Outb
 		if len(values) > 0 {
 			for _, v := range values {
 				v := *v
-				value <- v
+				producer, err := outbox.Publisher.FindProducer(v.AggregateType)
+				if err != nil {
+					slog.With(slog.String("AggregateType", v.AggregateType)).Error(err.Error())
+					continue
+				}
+				value <- interfaces.BinlogOutbox{
+					Outbox: interfaces.Outbox{
+						AggregateId: v.AggregateId,
+						EventType:   v.EventType,
+						Payload:     v.Payload,
+					},
+					Producer: producer,
+				}
 			}
 		}
 	}
 }
 
-func (outbox *OutboxPattern) handleWriteRowsEvent(e *replication.RowsEvent, columns []Column) ([]*interfaces.Outbox, error) {
-	values := make([]*interfaces.Outbox, 0, len(e.Rows))
+func (outbox *OutboxPattern) handleWriteRowsEvent(e *replication.RowsEvent, columns []Column) ([]*tOutbox, error) {
+	values := make([]*tOutbox, 0, len(e.Rows))
 	for _, row := range e.Rows {
 		p, err := outboxTableToOutboxInterface(row, columns)
 		if err != nil {
@@ -188,7 +200,14 @@ func (outbox *OutboxPattern) savePosition(name string, pos int) error {
 	return outbox.Config.Saver.Save(name, pos)
 }
 
-func outboxTableToOutboxInterface(row []interface{}, tableColumns []Column) (*interfaces.Outbox, error) {
+type tOutbox struct {
+	AggregateType string `json:"aggregate_type"`
+	AggregateId   string `json:"aggregate_id"`
+	EventType     string `json:"event_type"`
+	Payload       string `json:"payload"`
+}
+
+func outboxTableToOutboxInterface(row []interface{}, tableColumns []Column) (*tOutbox, error) {
 	r := make(map[string]interface{}, len(row))
 	for idx := 0; idx < len(row); idx++ {
 		r[tableColumns[idx].Name] = row[idx]
@@ -197,7 +216,7 @@ func outboxTableToOutboxInterface(row []interface{}, tableColumns []Column) (*in
 	if err := json.NewEncoder(&buf).Encode(&r); err != nil {
 		return nil, err
 	}
-	var outbox interfaces.Outbox
+	var outbox tOutbox
 	if err := json.NewDecoder(&buf).Decode(&outbox); err != nil {
 		return nil, err
 	}
