@@ -38,9 +38,12 @@ func (svc *service) PublishBinlog(ctx context.Context, payload interfaces.Payloa
 	return nil
 }
 
-func (svc *service) PublishOutbox(ctx context.Context, outbox interfaces.Outbox) error {
-	slog.With(slog.String("AggregateType", outbox.AggregateType), slog.String("AggregateId", outbox.AggregateId)).InfoContext(ctx, "Receive outbox.")
-	msgId, err := svc.publisher.PublishOutbox(ctx, outbox)
+func (svc *service) PublishOutbox(ctx context.Context, producer string, outbox interfaces.Outbox) error {
+	slog.With(
+		slog.String("Producer", producer),
+		slog.String("AggregateId", outbox.AggregateId),
+	).InfoContext(ctx, "Receive outbox.")
+	msgId, err := svc.publisher.PublishOutbox(ctx, producer, outbox)
 	if err != nil {
 		return err
 	}
