@@ -9,6 +9,7 @@ import (
 
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql/client"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +44,7 @@ func executePolling(ctx context.Context, configFilePath string) {
 		panic(err)
 	}
 
-	poller, err := mysql.NewOutboxPolling(config, publisher)
+	poller, err := mysql.NewOutboxPolling(config, publisher, client.RunInTransaction)
 	if err != nil {
 		panic(err)
 	}
