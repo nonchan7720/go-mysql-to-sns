@@ -21,9 +21,8 @@ type transaction func(ctx context.Context, db *ent.Client, execFunc func(ctx con
 
 type OutboxPolling struct {
 	*config.OutboxPolling
-	client   *client.Client
-	stop     sync.Once
-	stopping chan struct{}
+	client *client.Client
+	stop   sync.Once
 
 	timeNow          func() time.Time
 	publisher        interfaces.Publisher
@@ -31,36 +30,46 @@ type OutboxPolling struct {
 }
 
 func NewOutboxPolling(
+	ctx context.Context,
 	polling *config.OutboxPolling,
 	publisher interfaces.Publisher,
 	runInTransaction transaction,
 ) (*OutboxPolling, error) {
-	c, err := client.NewDB(&polling.Config)
+	c, err := client.NewDB(ctx, &polling.Config)
 	if err != nil {
 		return nil, err
 	}
 	return &OutboxPolling{
 		OutboxPolling: polling,
 		client:        c,
-		timeNow:       time.Now,
-		publisher:     publisher,
 		stop:          sync.Once{},
-		stopping:      make(chan struct{}),
+
+		timeNow:          time.Now,
+		publisher:        publisher,
+		runInTransaction: runInTransaction,
 	}, nil
 }
 
 func (p *OutboxPolling) Start(ctx context.Context) error {
+	stopping := make(chan struct{})
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	group, ctx := errgroup.WithContext(ctx)
 	group.Go(func() error {
-		<-p.stopping
+		<-stopping
 		cancel()
 		return nil
 	})
 
 	group.Go(func() error {
+		slog.Info("Start polling process.")
 		return p.processing(ctx)
+	})
+
+	group.Go(func() error {
+		defer close(stopping)
+		<-ctx.Done()
+		return nil
 	})
 
 	return group.Wait()
@@ -79,6 +88,7 @@ func (p *OutboxPolling) processing(ctx context.Context) error {
 
 		select {
 		case <-pollingTimer.C:
+			slog.Info("Resume polling.")
 			continue
 		case <-ctx.Done():
 			pollingTimer.Stop()
