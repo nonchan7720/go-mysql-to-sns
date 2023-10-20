@@ -5,13 +5,20 @@ import (
 	"testing"
 
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/utils"
 	"github.com/stretchr/testify/require"
 )
 
 func TestConnection(t *testing.T) {
+	var host string
+	if utils.IsCI() {
+		host = "localhost"
+	} else {
+		host = "db"
+	}
 	conf := config.Config{
 		Database: config.Database{
-			Host:     "db",
+			Host:     host,
 			Port:     3306,
 			Username: "admin",
 			Password: "pass1234",
