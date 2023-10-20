@@ -18,7 +18,7 @@ func TestConnection(t *testing.T) {
 			DBName:   "db",
 		},
 	}
-	c, err := NewDB(&conf)
+	c, err := NewDB(context.Background(), &conf)
 	require.NoError(t, err)
 	o, err := c.Outbox.Query().First(context.Background())
 	require.NoError(t, err)
