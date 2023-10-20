@@ -6,17 +6,7 @@ database:
   port: 3306
   username: admin
   password: pass1234
-  # sshTunnel: false
-  # tls:
-  #   insecureSkipVerify: true
-# ssh:
-#   privateKey:
-#   host:
-#   port:
-#   username:
-saver:
-  file:
-    name: binlog
+  name: db
 
 publisher:
   aws:
@@ -30,14 +20,12 @@ publisher:
             outbox:
               aggregateType: test-sns
           topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns
-          messageGroupIdTemplate: "id-{{id}}"
-    # sqs:
-    #   endpoint: http://localstack:4566
-    #   queues:
-    #     - transform:
-    #         type: table
-    #         table:
-    #           schema: mysql
-    #           tableName: test
-    #       queueName: test-sns.fifo
-    #       messageGroupIdTemplate: "id-{{id}}"
+        - transform:
+            type: outbox
+            outbox:
+              aggregateType: sns
+          topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns
+
+logging:
+  level: info
+  handler: json

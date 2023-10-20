@@ -376,11 +376,9 @@ func TestAWSSQSWithOutbox(t *testing.T) {
 		{
 			name: "AggregateType OK",
 			outbox: interfaces.Outbox{
-				ID:            1,
-				AggregateType: "topic-sqs",
-				AggregateId:   "xxx",
-				EventType:     "create",
-				Payload:       `{"key":"value"}`,
+				AggregateId: "xxx",
+				EventType:   "create",
+				Payload:     `{"key":"value"}`,
 			},
 			queue: config.Queue{
 				Transform: config.Transform{
@@ -417,38 +415,6 @@ func TestAWSSQSWithOutbox(t *testing.T) {
 				require.NoError(err)
 			},
 		},
-		{
-			name: "AggregateType NG",
-			outbox: interfaces.Outbox{
-				ID:            1,
-				AggregateType: "topic-ng",
-				AggregateId:   "xxx",
-				EventType:     "create",
-				Payload:       `{"key":"value"}`,
-			},
-			queue: config.Queue{
-				Transform: config.Transform{
-					Type: config.OutboxPatternType,
-					Outbox: &config.TransformOutbox{
-						AggregateType: "topic-sqs",
-					},
-				},
-				QueueName: "http://localhost:4566/000000000000/test-sqs",
-			},
-			fn: func(client *mockAws.MockSQSClient, require *require.Assertions) {
-				output := &sqs.SendMessageOutput{
-					MessageId: aws.String(uuid.NewString()),
-				}
-				client.EXPECT().
-					SendMessage(gomock.Any(), gomock.Any()).
-					Do(func(ctx context.Context, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) {}).
-					Return(output, nil).Times(0)
-			},
-			expect: func(require *require.Assertions, msgId string, err error) {
-				require.Empty(msgId)
-				require.Error(err)
-			},
-		},
 	}
 	ctx := context.Background()
 	mockCtl := gomock.NewController(t)
@@ -467,7 +433,7 @@ func TestAWSSQSWithOutbox(t *testing.T) {
 				},
 			}
 			p := newAWSSQS(ctx, client, &conf)
-			msgId, err := p.PublishOutbox(ctx, tbl.outbox)
+			msgId, err := p.PublishOutbox(ctx, tbl.queue.QueueUrl, tbl.outbox)
 			tbl.expect(require, msgId, err)
 		})
 	}

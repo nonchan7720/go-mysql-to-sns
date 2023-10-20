@@ -127,7 +127,7 @@ func goTemplate(str string, mp map[string]interface{}) string {
 }
 
 type TConfig interface {
-	Config | Outbox
+	Config | Outbox | OutboxPolling
 }
 
 func loadConfig[T TConfig](filePath string) (*T, error) {
