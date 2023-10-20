@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"time"
 
 	entsql "entgo.io/ent/dialect/sql"
@@ -18,7 +19,7 @@ type Client struct {
 	db *sql.DB
 }
 
-func NewDB(cfg *config.Config) (*Client, error) {
+func NewDB(ctx context.Context, cfg *config.Config) (*Client, error) {
 	dsn, err := cfg.Build()
 	if err != nil {
 		return nil, fmt.Errorf("rdb: failed to build connection string: %v\n", err)
@@ -32,14 +33,20 @@ func NewDB(cfg *config.Config) (*Client, error) {
 	if err := db.PingContext(ctx); err != nil {
 		return nil, err
 	}
-	return newClient("mysql", db), nil
+	return newClient(ctx, "mysql", db), nil
 }
 
-func newClient(dialect string, db *sql.DB) *Client {
+func newClient(ctx context.Context, dialect string, db *sql.DB) *Client {
 	drv := entsql.OpenDB(dialect, db)
 	SetDB(db)
+	opts := []ent.Option{
+		ent.Driver(drv),
+	}
+	if slog.Default().Enabled(ctx, slog.LevelDebug) {
+		opts = append(opts, ent.Debug())
+	}
 	return &Client{
-		Client: ent.NewClient(ent.Driver(drv), ent.Debug()),
+		Client: ent.NewClient(opts...),
 		db:     db,
 	}
 }
