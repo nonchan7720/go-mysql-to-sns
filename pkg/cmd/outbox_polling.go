@@ -44,7 +44,7 @@ func executePolling(ctx context.Context, configFilePath string) {
 		panic(err)
 	}
 
-	poller, err := mysql.NewOutboxPolling(config, publisher, client.RunInTransaction)
+	poller, err := mysql.NewOutboxPolling(ctx, config, publisher, client.RunInTransaction)
 	if err != nil {
 		panic(err)
 	}
