@@ -25,3 +25,7 @@ publisher:
             outbox:
               aggregateType: sns
           topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns
+
+logging:
+  level: info
+  handler: json
