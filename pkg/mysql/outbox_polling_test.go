@@ -128,7 +128,7 @@ func TestEventToMapProducerEvent(t *testing.T) {
 	mpEvents := testEventToMapProducerEvent()
 	assert.Len(t, mpEvents, 2)
 	assert.Len(t, mpEvents["arn:aws:sns:ap-northeast-1:000000000000:test-a"], 3)
-	assert.Len(t, mpEvents["arn:aws:sns:ap-northeast-1:000000000000:test-a.fifo"], 2)
+	assert.Len(t, mpEvents["arn:aws:sns:ap-northeast-1:000000000000:test-a.fifo"], 3)
 }
 
 func TestEventToGroupingAggregateIdAndSort(t *testing.T) {
