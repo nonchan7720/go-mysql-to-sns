@@ -10,31 +10,37 @@ import (
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql/client"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/service/healthcheck"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 )
+
+type outboxPollingArgs struct {
+	mainArgs
+}
 
 func outboxPollingCommand() *cobra.Command {
 	var (
-		configFilePath string
+		args outboxPollingArgs
 	)
 
 	cmd := cobra.Command{
 		Use: "polling",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			ctx := cmd.Context()
-			executePolling(ctx, configFilePath)
+			executePolling(ctx, &args)
 		},
 	}
 	flag := cmd.Flags()
-	flag.StringVarP(&configFilePath, "config", "c", "config.yaml", "configuration file path")
-
+	args.setpflag(flag)
 	return &cmd
 }
 
-func executePolling(ctx context.Context, configFilePath string) {
-	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+func executePolling(parent context.Context, args *outboxPollingArgs) {
+	ctx, stop := signal.NotifyContext(parent, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	config, err := config.LoadOutboxPollingConfig(configFilePath)
+	config, err := config.LoadOutboxPollingConfig(args.configFilePath)
 	if err != nil {
 		panic(err)
 	}
@@ -48,8 +54,16 @@ func executePolling(ctx context.Context, configFilePath string) {
 	if err != nil {
 		panic(err)
 	}
+	var healthCheckServer service.HealthCheck = healthcheck.New(poller, args.healthCheckAddr)
+	group, ctx := errgroup.WithContext(ctx)
+	group.Go(func() error {
+		return healthCheckServer.Start(ctx)
+	})
+	group.Go(func() error {
+		return poller.Start(ctx)
+	})
 
-	if err := poller.Start(ctx); err != nil && err != context.Canceled {
+	if err := group.Wait(); err != nil && err != context.Canceled {
 		slog.Error(err.Error())
 	}
 	stop()

@@ -3,6 +3,8 @@ package cmd
 import (
 	"log/slog"
 	"os"
+
+	"github.com/spf13/pflag"
 )
 
 func Execute() {
@@ -13,4 +15,14 @@ func Execute() {
 		exitCode = 1
 	}
 	os.Exit(exitCode)
+}
+
+type mainArgs struct {
+	configFilePath  string
+	healthCheckAddr string
+}
+
+func (args *mainArgs) setpflag(flag *pflag.FlagSet) {
+	flag.StringVarP(&args.configFilePath, "config", "c", "config.yaml", "configuration file path")
+	flag.StringVar(&args.healthCheckAddr, "health-check-addr", ":8080", "health check address")
 }

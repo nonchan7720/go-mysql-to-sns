@@ -13,22 +13,23 @@ import (
 
 type Binlog struct {
 	*config.Config
-	pos mysql.Position
+	pos  mysql.Position
+	conn *sql.DB
 }
 
 func NewBinlog(ctx context.Context, config *config.Config) (*Binlog, error) {
 	binlog := &Binlog{
 		Config: config,
 	}
+	conn, err := binlog.Connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	binlog.conn = conn
 	return binlog, nil
 }
 
 func (binlog *Binlog) Run(ctx context.Context, value chan interfaces.Payload) (err error) {
-	conn, err := binlog.Connect(ctx)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
 	var (
 		file string
 		pos  int
@@ -38,13 +39,13 @@ func (binlog *Binlog) Run(ctx context.Context, value chan interfaces.Payload) (e
 		pos = p
 	}
 	if file == "" && pos == 0 {
-		file, pos, err = binlog.loadBinlog(conn)
+		file, pos, err = binlog.loadBinlog(binlog.conn)
 		if err != nil {
 			return
 		}
 	}
-	info := NewTableInfo(conn)
-	serverId, err := binlog.findServerId(conn)
+	info := NewTableInfo(binlog.conn)
+	serverId, err := binlog.findServerId(binlog.conn)
 	if err != nil {
 		return err
 	}
@@ -219,6 +220,14 @@ func (binlog *Binlog) findServerId(conn *sql.DB) (serverId int, err error) {
 
 func (binlog *Binlog) SavePosition(fn func(file string, position int)) {
 	fn(binlog.pos.Name, int(binlog.pos.Pos))
+}
+
+func (binlog *Binlog) Close() {
+	_ = binlog.conn.Close()
+}
+
+func (binlog *Binlog) PingContext(ctx context.Context) error {
+	return binlog.conn.PingContext(ctx)
 }
 
 func binlogRowToPayloadRow(row []interface{}, tableColumns []Column) interfaces.Row {

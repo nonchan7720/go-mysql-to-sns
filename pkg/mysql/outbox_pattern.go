@@ -17,22 +17,23 @@ import (
 type OutboxPattern struct {
 	*config.Outbox
 	syncer *replication.BinlogSyncer
+	conn   *sql.DB
 }
 
 func NewOutboxPattern(ctx context.Context, config *config.Outbox) (*OutboxPattern, error) {
 	outbox := &OutboxPattern{
 		Outbox: config,
 	}
+	conn, err := outbox.Connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	outbox.conn = conn
 	return outbox, nil
 }
 
 func (outbox *OutboxPattern) Run(ctx context.Context, value chan interfaces.BinlogOutbox) (err error) {
-	conn, err := outbox.Connect(ctx)
-	if err != nil {
-		return
-	}
-	defer conn.Close()
-	info := NewTableInfo(conn)
+	info := NewTableInfo(outbox.conn)
 	table, err := info.Get(outbox.Outbox.Schema, outbox.Outbox.TableName)
 	if err != nil {
 		return
@@ -47,7 +48,7 @@ func (outbox *OutboxPattern) Run(ctx context.Context, value chan interfaces.Binl
 		pos = p
 	}
 	if file == "" && pos == 0 || loadErr != nil {
-		file, pos, err = outbox.loadBinlog(conn)
+		file, pos, err = outbox.loadBinlog(outbox.conn)
 		if err != nil {
 			return
 		}
@@ -55,7 +56,7 @@ func (outbox *OutboxPattern) Run(ctx context.Context, value chan interfaces.Binl
 			return err
 		}
 	}
-	serverId, err := outbox.findServerId(conn)
+	serverId, err := outbox.findServerId(outbox.conn)
 	if err != nil {
 		return err
 	}
@@ -189,6 +190,7 @@ func (outbox *OutboxPattern) findServerId(conn *sql.DB) (serverId int, err error
 
 func (outbox *OutboxPattern) Close() {
 	outbox.syncer.Close()
+	_ = outbox.conn.Close()
 }
 
 func (outbox *OutboxPattern) SavePosition() error {
@@ -198,6 +200,10 @@ func (outbox *OutboxPattern) SavePosition() error {
 
 func (outbox *OutboxPattern) savePosition(name string, pos int) error {
 	return outbox.Config.Saver.Save(name, pos)
+}
+
+func (outbox *OutboxPattern) PingContext(ctx context.Context) error {
+	return outbox.conn.PingContext(ctx)
 }
 
 type tOutbox struct {

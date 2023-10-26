@@ -10,32 +10,38 @@ import (
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/service/healthcheck"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
 
+type outboxBinlogArgs struct {
+	mainArgs
+}
+
 func outboxBinlogCommand() *cobra.Command {
 	var (
-		configFilePath string
+		args outboxBinlogArgs
 	)
 
 	cmd := cobra.Command{
 		Use: "binlog",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			ctx := cmd.Context()
-			executeOutboxBinlog(ctx, configFilePath)
+			executeOutboxBinlog(ctx, &args)
 		},
 	}
 	flag := cmd.Flags()
-	flag.StringVarP(&configFilePath, "config", "c", "config.yaml", "configuration file path")
+	args.setpflag(flag)
 
 	return &cmd
 }
 
-func executeOutboxBinlog(ctx context.Context, configFilePath string) {
+func executeOutboxBinlog(ctx context.Context, args *outboxBinlogArgs) {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	config, err := config.LoadOutboxConfig(configFilePath)
+	config, err := config.LoadOutboxConfig(args.configFilePath)
 	if err != nil {
 		panic(err)
 	}
@@ -45,17 +51,21 @@ func executeOutboxBinlog(ctx context.Context, configFilePath string) {
 		panic(err)
 	}
 
-	binlog, err := mysql.NewOutboxPattern(ctx, config)
+	outboxBinlog, err := mysql.NewOutboxPattern(ctx, config)
 	if err != nil {
 		panic(err)
 	}
-	defer binlog.Close()
+	defer outboxBinlog.Close()
 	payload := make(chan interfaces.BinlogOutbox)
 	savePoint := make(chan struct{})
 	eg, ctx := errgroup.WithContext(ctx)
+	var healthCheckServer service.HealthCheck = healthcheck.New(outboxBinlog, args.healthCheckAddr)
+	eg.Go(func() error {
+		return healthCheckServer.Start(ctx)
+	})
 	eg.Go(func() error {
 		defer close(payload)
-		return binlog.Run(ctx, payload)
+		return outboxBinlog.Run(ctx, payload)
 	})
 	eg.Go(func() error {
 		defer close(savePoint)
@@ -69,7 +79,7 @@ func executeOutboxBinlog(ctx context.Context, configFilePath string) {
 	})
 	eg.Go(func() error {
 		for range savePoint {
-			if err := binlog.SavePosition(); err != nil {
+			if err := outboxBinlog.SavePosition(); err != nil {
 				return err
 			}
 		}

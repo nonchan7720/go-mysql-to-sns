@@ -14,32 +14,37 @@ import (
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
 	backend "github.com/nonchan7720/go-mysql-to-sns/pkg/service/aws"
+	"github.com/nonchan7720/go-mysql-to-sns/pkg/service/healthcheck"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
 
+type runArgs struct {
+	mainArgs
+}
+
 func runCommand() *cobra.Command {
 	var (
-		configFilePath string
+		args runArgs
 	)
 
 	cmd := cobra.Command{
 		Use: "run",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			ctx := cmd.Context()
-			execute(ctx, configFilePath)
+			execute(ctx, &args)
 		},
 	}
 	flag := cmd.Flags()
-	flag.StringVarP(&configFilePath, "config", "c", "config.yaml", "configuration file path")
+	args.setpflag(flag)
 
 	return &cmd
 }
 
-func execute(ctx context.Context, configFilePath string) {
+func execute(ctx context.Context, args *runArgs) {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	config, err := config.LoadConfig(configFilePath)
+	config, err := config.LoadConfig(args.configFilePath)
 	if err != nil {
 		panic(err)
 	}
@@ -53,8 +58,13 @@ func execute(ctx context.Context, configFilePath string) {
 	if err != nil {
 		panic(err)
 	}
+	defer binlog.Close()
+	var healthCheckServer service.HealthCheck = healthcheck.New(binlog, args.healthCheckAddr)
 	payload := make(chan interfaces.Payload)
 	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		return healthCheckServer.Start(ctx)
+	})
 	eg.Go(func() error {
 		defer close(payload)
 		return binlog.Run(ctx, payload)
