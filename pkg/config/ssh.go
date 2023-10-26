@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"net"
 	"os"
 
 	"golang.org/x/crypto/ssh"
@@ -24,15 +23,12 @@ func (conf *SSH) Conn() (*ssh.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	hostKeyCallbackFunc := func(hostname string, remote net.Addr, key ssh.PublicKey) error {
-		return nil
-	}
 	sshConf := &ssh.ClientConfig{
 		User: conf.Username,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
-		HostKeyCallback: hostKeyCallbackFunc,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 	return ssh.Dial("tcp", fmt.Sprintf("%s:%d", conf.Host, conf.Port), sshConf)
 }
