@@ -14,11 +14,6 @@ import (
 	"github.com/uptrace/opentelemetry-go-extra/otelsql"
 )
 
-type Client struct {
-	*ent.Client
-	db *sql.DB
-}
-
 func NewDB(ctx context.Context, cfg *config.Config) (*Client, error) {
 	dsn, err := cfg.Build()
 	if err != nil {
@@ -28,9 +23,9 @@ func NewDB(ctx context.Context, cfg *config.Config) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	if err := db.PingContext(ctx); err != nil {
+	if err := db.PingContext(timeoutCtx); err != nil {
 		return nil, err
 	}
 	return newClient(ctx, "mysql", db), nil

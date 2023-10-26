@@ -14,7 +14,6 @@ import (
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
 	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql/client"
-	"golang.org/x/sync/errgroup"
 )
 
 type transaction func(ctx context.Context, db *ent.Client, execFunc func(ctx context.Context, tx *ent.Tx) error) (err error)
@@ -51,28 +50,8 @@ func NewOutboxPolling(
 }
 
 func (p *OutboxPolling) Start(ctx context.Context) error {
-	stopping := make(chan struct{})
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	group, ctx := errgroup.WithContext(ctx)
-	group.Go(func() error {
-		<-stopping
-		cancel()
-		return nil
-	})
-
-	group.Go(func() error {
-		slog.Info("Start polling process.")
-		return p.processing(ctx)
-	})
-
-	group.Go(func() error {
-		defer close(stopping)
-		<-ctx.Done()
-		return nil
-	})
-
-	return group.Wait()
+	slog.Info("Start polling process.")
+	return p.processing(ctx)
 }
 
 func (p *OutboxPolling) processing(ctx context.Context) error {
@@ -222,6 +201,10 @@ func (p *OutboxPolling) txUpdateOrDelete(isOk bool) func(ctx context.Context, tx
 	} else {
 		return p.txDeleteRecord
 	}
+}
+
+func (p *OutboxPolling) PingContext(ctx context.Context) error {
+	return p.client.PingContext(ctx)
 }
 
 // getNextRetryDuration return the next retry duration in seconds based on the attempt,
