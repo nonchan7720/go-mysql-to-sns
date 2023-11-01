@@ -1,6 +1,7 @@
 outbox:
   schema: mysql
   tableName: outbox
+  producerName: example
 database:
   host: db
   port: 3306
