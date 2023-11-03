@@ -11,8 +11,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/predicate"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent/outbox"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent/predicate"
 )
 
 const (

@@ -7,11 +7,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/service"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/service/healthcheck"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/config"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/interfaces"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/mysql"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/service"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/service/healthcheck"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )

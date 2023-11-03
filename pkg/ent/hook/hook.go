@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent"
 )
 
 // The OutboxFunc type is an adapter to allow the use of ordinary

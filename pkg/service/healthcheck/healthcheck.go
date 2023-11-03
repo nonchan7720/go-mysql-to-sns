@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/logging"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/logging"
 )
 
 type HealthChecker struct {

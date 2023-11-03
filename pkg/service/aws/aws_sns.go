@@ -7,10 +7,10 @@ import (
 	originAWS "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/aws/aws-sdk-go-v2/service/sns/types"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces/aws"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/utils"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/config"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/interfaces"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/interfaces/aws"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/utils"
 )
 
 type awsSNS struct {

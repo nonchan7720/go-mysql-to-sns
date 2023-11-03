@@ -5,8 +5,8 @@ import (
 
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces/aws"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/config"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/interfaces/aws"
 )
 
 func NewSNSClient(ctx context.Context, conf *config.AWS) (aws.SNSClient, error) {

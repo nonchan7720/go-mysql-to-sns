@@ -10,7 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent/outbox"
 )
 
 // OutboxCreate is the builder for creating a Outbox entity.

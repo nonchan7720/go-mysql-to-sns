@@ -9,9 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
-	mockAws "github.com/nonchan7720/go-mysql-to-sns/pkg/mock/aws"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/config"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/interfaces"
+	mockAws "github.com/nonchan7720/go-storage-to-messenger/pkg/mock/aws"
 	"github.com/stretchr/testify/require"
 )
 

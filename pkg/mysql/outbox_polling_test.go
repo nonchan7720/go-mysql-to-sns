@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 

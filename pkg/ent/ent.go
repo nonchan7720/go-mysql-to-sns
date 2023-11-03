@@ -12,7 +12,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent/outbox"
 )
 
 // ent aliases to avoid import conflicts in user's code.

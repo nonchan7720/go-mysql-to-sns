@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent"
 )
 
 type Client struct {

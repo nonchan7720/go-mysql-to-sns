@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	interfaces "github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
+	interfaces "github.com/nonchan7720/go-storage-to-messenger/pkg/interfaces"
 )
 
 // MockPublisher is a mock of Publisher interface.
