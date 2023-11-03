@@ -10,8 +10,8 @@ import (
 
 	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/config"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/interfaces"
 )
 
 type OutboxPattern struct {

@@ -3,7 +3,7 @@ package mysql
 import (
 	"time"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent"
 )
 
 type outboxPollingEvent struct {

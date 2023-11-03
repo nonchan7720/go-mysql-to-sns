@@ -9,12 +9,12 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/migrate"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent/migrate"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent/outbox"
 )
 
 // Client is the client that holds all ent builders.

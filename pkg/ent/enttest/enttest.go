@@ -5,12 +5,12 @@ package enttest
 import (
 	"context"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent"
 	// required by schema hooks.
-	_ "github.com/nonchan7720/go-mysql-to-sns/pkg/ent/runtime"
+	_ "github.com/nonchan7720/go-storage-to-messenger/pkg/ent/runtime"
 
 	"entgo.io/ent/dialect/sql/schema"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/migrate"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent/migrate"
 )
 
 type (

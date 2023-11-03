@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/interfaces"
 )
 
 type service struct {

@@ -2,7 +2,7 @@
 
 package runtime
 
-// The schema-stitching logic is generated in github.com/nonchan7720/go-mysql-to-sns/pkg/ent/runtime.go
+// The schema-stitching logic is generated in github.com/nonchan7720/go-storage-to-messenger/pkg/ent/runtime.go
 
 const (
 	Version = "v0.12.4"                                         // Version of ent codegen.

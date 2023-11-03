@@ -1,5 +1,5 @@
 {
-  "name": "binlog-to-sns-dev",
+  "name": "dev",
   "dockerComposeFile": [
     "../docker-compose.yaml"
   ],

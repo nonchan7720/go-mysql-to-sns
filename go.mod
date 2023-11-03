@@ -1,4 +1,4 @@
-module github.com/nonchan7720/go-mysql-to-sns
+module github.com/nonchan7720/go-storage-to-messenger
 
 go 1.21
 

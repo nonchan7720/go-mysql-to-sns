@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-mysql-org/go-mysql/mysql"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/utils"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/utils"
 	"github.com/stretchr/testify/require"
 )
 

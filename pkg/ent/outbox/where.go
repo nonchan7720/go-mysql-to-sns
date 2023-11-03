@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/predicate"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.

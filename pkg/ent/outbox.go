@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent/outbox"
 )
 
 // Outbox is the model entity for the Outbox schema.

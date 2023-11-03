@@ -9,11 +9,11 @@ import (
 	"time"
 
 	entsql "entgo.io/ent/dialect/sql"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/config"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/ent/outbox"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/interfaces"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/mysql/client"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/config"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/ent/outbox"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/interfaces"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/mysql/client"
 )
 
 type transaction func(ctx context.Context, db *ent.Client, execFunc func(ctx context.Context, tx *ent.Tx) error) (err error)

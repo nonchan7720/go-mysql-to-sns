@@ -10,7 +10,7 @@ import (
 	"text/template"
 
 	"github.com/google/uuid"
-	"github.com/nonchan7720/go-mysql-to-sns/pkg/utils"
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/utils"
 	"github.com/valyala/fasttemplate"
 	"gopkg.in/yaml.v3"
 )
