@@ -16,7 +16,7 @@ permissions:
 env:
   DOCKERHUB_USERNAME: ncsnozominishinohara
   IS_RELEASED: ${{ startsWith(github.ref, 'refs/tags/v') }}
-  IMAGE_NAME: go-mysql-to-sns
+  IMAGE_NAME: go-storage-to-messenger
 
 jobs:
   release-and-push:
