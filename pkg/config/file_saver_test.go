@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,6 +27,6 @@ func TestValidateFileSaver(t *testing.T) {
 	saver := FileSaver{
 		Name: "",
 	}
-	err := validation.Validate(&saver)
-	require.Equal(t, "Name: cannot be blank.", err.Error())
+	err := Validate(&saver)
+	require.Equal(t, "name: cannot be blank.", err.Error())
 }

@@ -3,7 +3,6 @@ package config
 import (
 	"testing"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -41,6 +40,6 @@ func TestTransformValidation(t *testing.T) {
 		Column: &TransformColumn{},
 		Outbox: &TransformOutbox{},
 	}
-	err := validation.Validate(&transform)
-	require.Equal(t, "Column: (ColumnName: cannot be blank; Table: (Schema: cannot be blank; TableName: cannot be blank.); Value: cannot be blank.); Outbox: (AggregateType: cannot be blank.); Table: (Schema: cannot be blank; TableName: cannot be blank.).", err.Error())
+	err := Validate(&transform)
+	require.Equal(t, "column: (Table: (schema: cannot be blank; tableName: cannot be blank.); columnName: cannot be blank; value: cannot be blank.); outbox: (aggregateType: cannot be blank.); table: (schema: cannot be blank; tableName: cannot be blank.).", err.Error())
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"testing"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -78,37 +77,37 @@ queues:
 
 func TestQueueValidation(t *testing.T) {
 	q := Queue{}
-	err := validation.Validate(&q)
-	require.Equal(t, "QueueName: cannot be blank; QueueUrl: cannot be blank.", err.Error())
+	err := Validate(&q)
+	require.Equal(t, "queueName: cannot be blank; queueUrl: cannot be blank.", err.Error())
 
 	q = Queue{
 		QueueUrl: "localhost",
 	}
-	err = validation.Validate(&q)
-	require.Equal(t, "QueueUrl: must be a valid URL.", err.Error())
+	err = Validate(&q)
+	require.Equal(t, "queueUrl: must be a valid URL.", err.Error())
 
 	q = Queue{
 		QueueUrl: "sqs://ap-northeast-1.amazonaws.com/000000000000/queue",
 	}
-	err = validation.Validate(&q)
-	require.Equal(t, "QueueUrl: must be a valid URL.", err.Error())
+	err = Validate(&q)
+	require.Equal(t, "queueUrl: must be a valid URL.", err.Error())
 
 	q = Queue{
 		QueueUrl: "http://localstack:4566/000000000000/queue.fifo",
 	}
-	err = validation.Validate(&q)
-	require.Equal(t, "MessageGroupIdTemplate: cannot be blank.", err.Error())
+	err = Validate(&q)
+	require.Equal(t, "messageGroupIdTemplate: cannot be blank.", err.Error())
 
 	q = Queue{
 		QueueUrl: "http://localhost",
 	}
-	err = validation.Validate(&q)
+	err = Validate(&q)
 	require.NoError(t, err)
 
 	q = Queue{
 		QueueUrl:               "http://localstack:4566/000000000000/queue.fifo",
 		MessageGroupIdTemplate: "id-{{id}}",
 	}
-	err = validation.Validate(&q)
+	err = Validate(&q)
 	require.NoError(t, err)
 }

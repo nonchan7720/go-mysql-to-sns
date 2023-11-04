@@ -10,7 +10,6 @@ import (
 	"text/template"
 
 	"github.com/creasty/defaults"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/goccy/go-yaml"
 	"github.com/google/uuid"
 	"github.com/nonchan7720/go-storage-to-messenger/pkg/utils"
@@ -142,12 +141,9 @@ func loadConfig[T TConfig](filePath string) (*T, error) {
 	if err := loadYaml(f, &config); err != nil {
 		return nil, err
 	}
-	oldErrorTag := validation.ErrorTag
-	validation.ErrorTag = "yaml"
-	if err := validation.Validate(&config); err != nil {
+	if err := Validate(&config); err != nil {
 		return nil, err
 	}
-	validation.ErrorTag = oldErrorTag
 	return &config, nil
 }
 

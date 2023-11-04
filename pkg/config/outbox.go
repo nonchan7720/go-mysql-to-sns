@@ -3,8 +3,8 @@ package config
 import validation "github.com/go-ozzo/ozzo-validation/v4"
 
 type Outbox struct {
-	Config         `yaml:",inline"`
-	TransformTable `yaml:"outbox"`
+	Config          `yaml:",inline"`
+	*TransformTable `yaml:"outbox"`
 }
 
 func LoadOutboxConfig(filePath string) (*Outbox, error) {
@@ -18,6 +18,6 @@ func LoadOutboxConfig(filePath string) (*Outbox, error) {
 func (conf Outbox) Validate() error {
 	return validation.ValidateStruct(&conf,
 		validation.Field(&conf.Config),
-		validation.Field(&conf.TransformTable),
+		validation.Field(&conf.TransformTable, validation.NotNil),
 	)
 }

@@ -126,7 +126,7 @@ func (c Config) Validate() error {
 	return validation.ValidateStruct(&c,
 		validation.Field(&c.Database),
 		validation.Field(&c.SSH),
-		validation.Field(&c.Publisher),
+		validation.Field(&c.Publisher, validation.NotNil),
 		validation.Field(&c.Logging),
 	)
 }

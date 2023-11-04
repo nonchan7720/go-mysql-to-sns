@@ -3,7 +3,6 @@ package config
 import (
 	"testing"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -24,6 +23,6 @@ func TestAWSValidation(t *testing.T) {
 		SNS: &SNS{},
 		SQS: &SQS{},
 	}
-	err := validation.Validate(&aws)
-	require.Equal(t, "SNS: (Topics: cannot be blank.); SQS: (Queues: cannot be blank.).", err.Error())
+	err := Validate(&aws)
+	require.Equal(t, "sns: (topics: cannot be blank.); sqs: (queues: cannot be blank.).", err.Error())
 }

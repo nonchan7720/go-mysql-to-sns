@@ -3,7 +3,6 @@ package config
 import (
 	"testing"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,8 +29,8 @@ func TestDatabase(t *testing.T) {
 
 func TestDatabaseValidation(t *testing.T) {
 	conf := Database{}
-	err := validation.Validate(&conf)
-	require.Equal(t, "DBName: cannot be blank; Host: cannot be blank; Password: cannot be blank; Port: cannot be blank; Username: cannot be blank.", err.Error())
+	err := Validate(&conf)
+	require.Equal(t, "host: cannot be blank; name: cannot be blank; password: cannot be blank; port: cannot be blank; username: cannot be blank.", err.Error())
 }
 
 func TestTLS(t *testing.T) {

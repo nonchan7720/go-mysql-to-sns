@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/nonchan7720/go-storage-to-messenger/pkg/backend/aws"
 	"github.com/nonchan7720/go-storage-to-messenger/pkg/config"
 	"github.com/nonchan7720/go-storage-to-messenger/pkg/interfaces"
@@ -46,6 +47,10 @@ func execute(ctx context.Context, args *runArgs) {
 	defer stop()
 	config, err := config.LoadConfig(args.configFilePath)
 	if err != nil {
+		panic(err)
+	}
+
+	if err := executeValidation(config); err != nil {
 		panic(err)
 	}
 
@@ -114,4 +119,10 @@ func getPublisher(ctx context.Context, conf *config.Publisher) (interfaces.Publi
 		return nil, noSelectedErr
 	}
 	return service.New(publisher), nil
+}
+
+func executeValidation(conf *config.Config) error {
+	return config.ValidateStruct(conf,
+		validation.Field(&conf.Saver, validation.NotNil),
+	)
 }
