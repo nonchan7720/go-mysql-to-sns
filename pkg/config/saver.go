@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type Saver interface {
@@ -29,4 +31,10 @@ func (s *BinlogSaver) Load() (string, int, error) {
 		return s.File.Load()
 	}
 	return "", 0, ErrNotSelected
+}
+
+func (s BinlogSaver) Validate() error {
+	return validation.ValidateStruct(&s,
+		validation.Field(&s.File),
+	)
 }

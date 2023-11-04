@@ -141,7 +141,7 @@ func loadConfig[T TConfig](filePath string) (*T, error) {
 	if err := loadYaml(f, &config); err != nil {
 		return nil, err
 	}
-	if err := validate.Struct(&config); err != nil {
+	if err := Validate(&config); err != nil {
 		return nil, err
 	}
 	return &config, nil

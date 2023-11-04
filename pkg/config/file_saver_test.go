@@ -22,3 +22,11 @@ func TestFileSaver(t *testing.T) {
 	require.Equal(t, file, "binlog")
 	require.Equal(t, pos, 100)
 }
+
+func TestValidateFileSaver(t *testing.T) {
+	saver := FileSaver{
+		Name: "",
+	}
+	err := Validate(&saver)
+	require.Equal(t, "name: cannot be blank.", err.Error())
+}

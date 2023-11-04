@@ -27,6 +27,12 @@ func TestDatabase(t *testing.T) {
 	require.Equal(t, tls.ServerName, "aaa")
 }
 
+func TestDatabaseValidation(t *testing.T) {
+	conf := Database{}
+	err := Validate(&conf)
+	require.Equal(t, "host: cannot be blank; name: cannot be blank; password: cannot be blank; port: cannot be blank; username: cannot be blank.", err.Error())
+}
+
 func TestTLS(t *testing.T) {
 	tls := TLS{
 		InsecureSkipVerify: false,

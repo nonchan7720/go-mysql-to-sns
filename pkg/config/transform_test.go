@@ -33,3 +33,13 @@ column:
 	require.False(t, transform.Table.IsEnabled("fPublic", "Test"))
 	require.False(t, transform.Column.Table.IsEnabled("fPublic", "Test"))
 }
+
+func TestTransformValidation(t *testing.T) {
+	transform := Transform{
+		Table:  &TransformTable{},
+		Column: &TransformColumn{},
+		Outbox: &TransformOutbox{},
+	}
+	err := Validate(&transform)
+	require.Equal(t, "column: (Table: (schema: cannot be blank; tableName: cannot be blank.); columnName: cannot be blank; value: cannot be blank.); outbox: (aggregateType: cannot be blank.); table: (schema: cannot be blank; tableName: cannot be blank.).", err.Error())
+}

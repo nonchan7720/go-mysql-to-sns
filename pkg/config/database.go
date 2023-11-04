@@ -4,27 +4,43 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"time"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type Database struct {
-	Host              string `yaml:"host" validate:"required"`
-	Port              int    `yaml:"port" default:"3306" validate:"required"`
-	Username          string `yaml:"username" validate:"required"`
-	Password          string `yaml:"password" validate:"required"`
-	DBName            string `yaml:"name" default:"mysql" validate:"required"`
+	Host              string `yaml:"host"`
+	Port              int    `yaml:"port" default:"3306"`
+	Username          string `yaml:"username"`
+	Password          string `yaml:"password"`
+	DBName            string `yaml:"name" default:"mysql"`
 	SSHTunnel         bool   `yaml:"sshTunnel"`
 	TLS               *TLS   `yaml:"tls"`
-	MaxOpenConn       int    `yaml:"MAX_OPEN_CONN" default:"10"`
-	MaxLifeTimeSecond int    `yaml:"MAX_LIFE_TIME_SECOND" default:"300"`
-	MaxIdleConn       int    `yaml:"MAX_IDLE_CONN" default:"1"`
-	MaxIdleSecond     int    `yaml:"MAX_IDLE_SECOND" default:"0"`
+	MaxOpenConn       int    `yaml:"maxOpenConn" default:"10"`
+	MaxLifeTimeSecond int    `yaml:"maxLifeTimeSecond" default:"300"`
+	MaxIdleConn       int    `yaml:"maxIdleConn" default:"1"`
+	MaxIdleSecond     int    `yaml:"maxIdleSecond" default:"0"`
 }
+
+var (
+	_ validation.Validatable = (*Database)(nil)
+)
 
 func (d *Database) Tls() *tls.Config {
 	if d.TLS == nil {
 		return nil
 	}
 	return d.TLS.Config()
+}
+
+func (d Database) Validate() error {
+	return validation.ValidateStruct(&d,
+		validation.Field(&d.Host, validation.Required),
+		validation.Field(&d.Port, validation.Required),
+		validation.Field(&d.Username, validation.Required),
+		validation.Field(&d.Password, validation.Required),
+		validation.Field(&d.DBName, validation.Required),
+	)
 }
 
 type TLS struct {

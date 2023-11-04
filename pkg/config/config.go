@@ -8,16 +8,21 @@ import (
 
 	"github.com/go-mysql-org/go-mysql/client"
 	"github.com/go-mysql-org/go-mysql/replication"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-sql-driver/mysql"
 )
 
 type Config struct {
 	Database  Database     `yaml:"database"`
-	SSH       SSH          `yaml:"ssh"`
+	SSH       *SSH         `yaml:"ssh"`
 	Saver     *BinlogSaver `yaml:"saver"`
 	Publisher *Publisher   `yaml:"publisher"`
 	Logging   Logging      `yaml:"logging"`
 }
+
+var (
+	_ validation.Validatable = (*Config)(nil)
+)
 
 func LoadConfig(filePath string) (*Config, error) {
 	config, err := loadConfig[Config](filePath)
@@ -115,4 +120,13 @@ func (c *Config) NewBinlogSyncer(serverId int) (*replication.BinlogSyncer, error
 		TLSConfig: c.Database.Tls(),
 	}
 	return replication.NewBinlogSyncer(cfg), nil
+}
+
+func (c Config) Validate() error {
+	return validation.ValidateStruct(&c,
+		validation.Field(&c.Database),
+		validation.Field(&c.SSH),
+		validation.Field(&c.Publisher, validation.NotNil),
+		validation.Field(&c.Logging),
+	)
 }

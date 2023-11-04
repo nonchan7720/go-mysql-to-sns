@@ -1,26 +1,21 @@
 package config
 
-import "github.com/go-playground/validator/v10"
+import validation "github.com/go-ozzo/ozzo-validation/v4"
 
-var validate = validator.New(validator.WithRequiredStructEnabled())
-
-func init() {
-	validate.RegisterStructValidation(fifoRequiredValidation, SNS{}, SQS{})
+func Validate(v any) error {
+	oldTag := validation.ErrorTag
+	validation.ErrorTag = "yaml"
+	defer func() {
+		validation.ErrorTag = oldTag
+	}()
+	return validation.Validate(v)
 }
 
-func fifoRequiredValidation(sl validator.StructLevel) {
-	switch inf := sl.Current().Interface().(type) {
-	case SNS:
-		for _, t := range inf.Topics {
-			if t.IsFIFO() && !t.Transform.IsOutbox() && t.MessageGroupIdTemplate == "" {
-				sl.ReportError(t.MessageGroupIdTemplate, "MessageGroupIdTemplate", "messageGroupIdTemplate", "required_fifo_message_group_id", "")
-			}
-		}
-	case SQS:
-		for _, q := range inf.Queues {
-			if q.IsFIFO() && !q.Transform.IsOutbox() && q.MessageGroupIdTemplate == "" {
-				sl.ReportError(q.MessageGroupIdTemplate, "MessageGroupIdTemplate", "messageGroupIdTemplate", "required_fifo_message_group_id", "")
-			}
-		}
-	}
+func ValidateStruct(v any, fields ...*validation.FieldRules) error {
+	oldTag := validation.ErrorTag
+	validation.ErrorTag = "yaml"
+	defer func() {
+		validation.ErrorTag = oldTag
+	}()
+	return validation.ValidateStruct(v, fields...)
 }

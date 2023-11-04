@@ -69,3 +69,28 @@ topics:
 	require.Equal(t, config.Topics[0].MessageGroupIdTemplate, "id-{{id}}")
 	require.Equal(t, config.Topics[0].TemplateType, GoTemplate)
 }
+
+func TestTopicValidation(t *testing.T) {
+	topic := Topic{}
+	err := Validate(&topic)
+	require.Equal(t, "topicArn: cannot be blank.", err.Error())
+
+	topic = Topic{
+		TopicArn: "arn:aws:sns:ap-northeast-1:000000000000:test-topic.fifo",
+	}
+	err = Validate(&topic)
+	require.Equal(t, "messageGroupIdTemplate: cannot be blank.", err.Error())
+
+	topic = Topic{
+		TopicArn: "arn:aws:sns:ap-northeast-1:000000000000:test-topic",
+	}
+	err = Validate(&topic)
+	require.NoError(t, err)
+
+	topic = Topic{
+		TopicArn:               "arn:aws:sns:ap-northeast-1:000000000000:test-topic.fifo",
+		MessageGroupIdTemplate: "id-{{id}}",
+	}
+	err = Validate(&topic)
+	require.NoError(t, err)
+}

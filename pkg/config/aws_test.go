@@ -17,3 +17,12 @@ secretKey: dummy
 	require.Equal(t, config.AccessKey, "dummy")
 	require.Equal(t, config.SecretKet, "dummy")
 }
+
+func TestAWSValidation(t *testing.T) {
+	aws := AWS{
+		SNS: &SNS{},
+		SQS: &SQS{},
+	}
+	err := Validate(&aws)
+	require.Equal(t, "sns: (topics: cannot be blank.); sqs: (queues: cannot be blank.).", err.Error())
+}

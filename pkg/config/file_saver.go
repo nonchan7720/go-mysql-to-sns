@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gopkg.in/yaml.v3"
 )
 
@@ -37,4 +38,10 @@ func (s *FileSaver) Load() (file string, position int, err error) {
 	defer f.Close()
 	err = yaml.NewDecoder(f).Decode(&value)
 	return value.File, value.Position, err
+}
+
+func (s FileSaver) Validate() error {
+	return validation.ValidateStruct(&s,
+		validation.Field(&s.Name, validation.Required),
+	)
 }

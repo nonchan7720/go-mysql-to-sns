@@ -46,6 +46,10 @@ func executeOutboxBinlog(ctx context.Context, args *outboxBinlogArgs) {
 		panic(err)
 	}
 
+	if err := executeValidation(&config.Config); err != nil {
+		panic(err)
+	}
+
 	publisher, err := getPublisher(ctx, config.Publisher)
 	if err != nil {
 		panic(err)

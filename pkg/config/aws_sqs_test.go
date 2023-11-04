@@ -74,3 +74,40 @@ queues:
 	require.Equal(t, config.Queues[0].MessageGroupIdTemplate, "id-{{id}}")
 	require.Equal(t, config.Queues[0].TemplateType, GoTemplate)
 }
+
+func TestQueueValidation(t *testing.T) {
+	q := Queue{}
+	err := Validate(&q)
+	require.Equal(t, "queueName: cannot be blank; queueUrl: cannot be blank.", err.Error())
+
+	q = Queue{
+		QueueUrl: "localhost",
+	}
+	err = Validate(&q)
+	require.Equal(t, "queueUrl: must be a valid URL.", err.Error())
+
+	q = Queue{
+		QueueUrl: "sqs://ap-northeast-1.amazonaws.com/000000000000/queue",
+	}
+	err = Validate(&q)
+	require.Equal(t, "queueUrl: must be a valid URL.", err.Error())
+
+	q = Queue{
+		QueueUrl: "http://localstack:4566/000000000000/queue.fifo",
+	}
+	err = Validate(&q)
+	require.Equal(t, "messageGroupIdTemplate: cannot be blank.", err.Error())
+
+	q = Queue{
+		QueueUrl: "http://localhost",
+	}
+	err = Validate(&q)
+	require.NoError(t, err)
+
+	q = Queue{
+		QueueUrl:               "http://localstack:4566/000000000000/queue.fifo",
+		MessageGroupIdTemplate: "id-{{id}}",
+	}
+	err = Validate(&q)
+	require.NoError(t, err)
+}
