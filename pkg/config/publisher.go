@@ -14,13 +14,6 @@ func (p *Publisher) IsAWS() bool {
 	return p.AWS != nil
 }
 
-func (p *Publisher) Validation() error {
-	if p.AWS != nil {
-		return p.AWS.Validation()
-	}
-	return nil
-}
-
 func (p *Publisher) FindProducer(value string) (string, error) {
 	if p.IsAWS() {
 		if p.AWS.IsSNS() {

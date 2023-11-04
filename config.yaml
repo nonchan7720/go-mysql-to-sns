@@ -21,11 +21,6 @@ publisher:
             outbox:
               aggregateType: test-sns
           topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns
-        - transform:
-            type: outbox
-            outbox:
-              aggregateType: sns
-          topicArn: arn:aws:sns:ap-northeast-1:000000000000:test-sns
 
 logging:
   level: info
