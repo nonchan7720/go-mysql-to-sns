@@ -1,10 +1,10 @@
 package config
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
 func TestAWSSNSConfig(t *testing.T) {
@@ -23,7 +23,7 @@ topics:
         value: test
 `
 	var config SNS
-	err := yaml.Unmarshal([]byte(data), &config)
+	err := loadYaml(bytes.NewBufferString(data), &config)
 	require.NoError(t, err)
 	require.Equal(t, config.Endpoint, "http://localstack:4566")
 	require.Len(t, config.Topics, 1)
@@ -55,7 +55,7 @@ topics:
         value: test
 `
 	var config SNS
-	err := yaml.Unmarshal([]byte(data), &config)
+	err := loadYaml(bytes.NewBufferString(data), &config)
 	require.NoError(t, err)
 	require.Equal(t, config.Endpoint, "http://localstack:4566")
 	require.Len(t, config.Topics, 1)

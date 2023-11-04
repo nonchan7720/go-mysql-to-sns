@@ -11,7 +11,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.24.6
 	github.com/creasty/defaults v1.7.0
 	github.com/go-mysql-org/go-mysql v1.7.0
+	github.com/go-playground/validator/v10 v10.15.5
 	github.com/go-sql-driver/mysql v1.7.1
+	github.com/goccy/go-yaml v1.11.2
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -48,8 +50,6 @@ require (
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.15.5 // indirect
-	github.com/goccy/go-yaml v1.11.2 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.19.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

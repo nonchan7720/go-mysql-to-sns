@@ -138,16 +138,23 @@ func loadConfig[T TConfig](filePath string) (*T, error) {
 	}
 	defer f.Close()
 	var config T
-	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
-		return nil, err
-	}
-	if err := defaults.Set(&config); err != nil {
+	if err := loadYaml(f, &config); err != nil {
 		return nil, err
 	}
 	if err := validate.Struct(&config); err != nil {
 		return nil, err
 	}
 	return &config, nil
+}
+
+func loadYaml(r io.Reader, v any) error {
+	if err := yaml.NewDecoder(r).Decode(v); err != nil {
+		return err
+	}
+	if err := defaults.Set(v); err != nil {
+		return err
+	}
+	return nil
 }
 
 func WriteConfig[T TConfig](w io.Writer) error {

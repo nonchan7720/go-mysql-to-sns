@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,7 @@ queues:
         value: test
 `
 	var config SQS
-	err := yaml.Unmarshal([]byte(data), &config)
+	err := loadYaml(bytes.NewBufferString(data), &config)
 	require.NoError(t, err)
 	require.Equal(t, config.Endpoint, "http://localstack:4566")
 	require.Len(t, config.Queues, 1)
