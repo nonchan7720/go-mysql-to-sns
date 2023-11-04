@@ -136,13 +136,23 @@ func loadConfig[T TConfig](filePath string) (*T, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
 	var config T
 	if err := loadYaml(f, &config); err != nil {
 		return nil, err
 	}
 	if err := Validate(&config); err != nil {
 		return nil, err
+	}
+	switch t := any(&config).(type) {
+	case *Config:
+		setConfig(t)
+		t.Logging.SetupLog()
+	case *Outbox:
+		setConfig(&t.Config)
+		t.Logging.SetupLog()
+	case *OutboxPolling:
+		setConfig(&t.Config)
+		t.Logging.SetupLog()
 	}
 	return &config, nil
 }

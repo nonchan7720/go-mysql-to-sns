@@ -24,7 +24,7 @@ func TestExpandEnvReader(t *testing.T) {
 		Key string `yaml:"key"`
 	}{}
 	scanner := &textScanner{Reader: strings.NewReader(data)}
-	f := NewExpandEnvWithReadeCloser(scanner)
+	f := NewExpandEnvWithReader(scanner)
 	err := yaml.NewDecoder(f).Decode(&value)
 	require.NoError(t, err)
 	require.Equal(t, "Value", value.Key)
