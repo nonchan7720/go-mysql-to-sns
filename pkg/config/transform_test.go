@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -32,4 +33,14 @@ column:
 	require.True(t, transform.Column.Table.IsEnabled("Public", "Test"))
 	require.False(t, transform.Table.IsEnabled("fPublic", "Test"))
 	require.False(t, transform.Column.Table.IsEnabled("fPublic", "Test"))
+}
+
+func TestTransformValidation(t *testing.T) {
+	transform := Transform{
+		Table:  &TransformTable{},
+		Column: &TransformColumn{},
+		Outbox: &TransformOutbox{},
+	}
+	err := validation.Validate(&transform)
+	require.Equal(t, "Column: (ColumnName: cannot be blank; Table: (Schema: cannot be blank; TableName: cannot be blank.); Value: cannot be blank.); Outbox: (AggregateType: cannot be blank.); Table: (Schema: cannot be blank; TableName: cannot be blank.).", err.Error())
 }

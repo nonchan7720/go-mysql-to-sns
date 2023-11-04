@@ -4,6 +4,9 @@ import (
 	"errors"
 	"strings"
 	"sync"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
 var (
@@ -18,6 +21,10 @@ type SQS struct {
 	lockAggregateTypeTopic sync.Mutex
 	onceMapTopic           sync.Once
 }
+
+var (
+	_ validation.Validatable = (*SQS)(nil)
+)
 
 func (sqs *SQS) FindOutboxQueue(aggregateType string) (Queue, error) {
 	sqs.lockAggregateTypeTopic.Lock()
@@ -45,6 +52,12 @@ func (sqs *SQS) FindOutboxQueueUrl(aggregateType string) (string, error) {
 	return q.QueueUrl, nil
 }
 
+func (sqs *SQS) Validate() error {
+	return validation.ValidateStruct(sqs,
+		validation.Field(&sqs.Queues, validation.Required),
+	)
+}
+
 type Queue struct {
 	QueueName              string       `yaml:"queueName"`
 	QueueUrl               string       `yaml:"queueUrl"`
@@ -65,9 +78,14 @@ func (t *Queue) IsFIFO() bool {
 	return strings.HasSuffix(t.QueueUrl, ".fifo")
 }
 
-func (t *Queue) Validation() error {
-	if t.IsFIFO() && t.MessageGroupIdTemplate == "" {
-		return errors.New("For FIFO topics, MessageGroupIdTemplate must be set.")
-	}
-	return nil
+func (t Queue) Validate() error {
+	return validation.ValidateStruct(&t,
+		validation.Field(&t.QueueName, validation.Required.When(t.QueueUrl == "")),
+		validation.Field(&t.QueueUrl, validation.Required.When(t.QueueName == "")),
+		validation.Field(&t.QueueUrl, validation.When(t.QueueUrl != "", is.URL)),
+		validation.Field(&t.MessageGroupIdTemplate,
+			validation.Required.When(t.IsFIFO() && !t.Transform.IsOutbox()),
+		),
+		validation.Field(&t.Transform),
+	)
 }

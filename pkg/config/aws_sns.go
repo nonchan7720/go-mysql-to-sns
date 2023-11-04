@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"sync"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 var (
@@ -18,6 +20,10 @@ type SNS struct {
 	lockAggregateTypeTopic sync.Mutex
 	onceMapTopic           sync.Once
 }
+
+var (
+	_ validation.Validatable = (*SNS)(nil)
+)
 
 func (sns *SNS) FindOutboxTopic(aggregateType string) (Topic, error) {
 	sns.lockAggregateTypeTopic.Lock()
@@ -45,12 +51,22 @@ func (sns *SNS) FindOutboxTopicArn(aggregateType string) (string, error) {
 	return t.TopicArn, nil
 }
 
+func (sns *SNS) Validate() error {
+	return validation.ValidateStruct(sns,
+		validation.Field(&sns.Topics, validation.Required),
+	)
+}
+
 type Topic struct {
 	TopicArn               string       `yaml:"topicArn"`
 	MessageGroupIdTemplate string       `yaml:"messageGroupIdTemplate"`
 	TemplateType           TemplateType `yaml:"templateType" default:"Fast"`
 	Transform              Transform    `yaml:"transform"`
 }
+
+var (
+	_ validation.Validatable = (*Topic)(nil)
+)
 
 func (t *Topic) GetMessageGroupId(mp map[string]interface{}) *string {
 	if !t.IsFIFO() {
@@ -62,4 +78,14 @@ func (t *Topic) GetMessageGroupId(mp map[string]interface{}) *string {
 
 func (t *Topic) IsFIFO() bool {
 	return strings.HasSuffix(t.TopicArn, ".fifo")
+}
+
+func (t Topic) Validate() error {
+	return validation.ValidateStruct(&t,
+		validation.Field(&t.TopicArn, validation.Required),
+		validation.Field(&t.MessageGroupIdTemplate,
+			validation.Required.When(t.IsFIFO() && !t.Transform.IsOutbox()),
+		),
+		validation.Field(&t.Transform),
+	)
 }

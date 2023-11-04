@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/stretchr/testify/require"
 )
 
@@ -68,4 +69,29 @@ topics:
 	require.Equal(t, config.Topics[0].TopicArn, "arn:aws:sns:ap-northeast-1:000000000000:test-topic")
 	require.Equal(t, config.Topics[0].MessageGroupIdTemplate, "id-{{id}}")
 	require.Equal(t, config.Topics[0].TemplateType, GoTemplate)
+}
+
+func TestTopicValidation(t *testing.T) {
+	topic := Topic{}
+	err := validation.Validate(&topic)
+	require.Equal(t, "TopicArn: cannot be blank.", err.Error())
+
+	topic = Topic{
+		TopicArn: "arn:aws:sns:ap-northeast-1:000000000000:test-topic.fifo",
+	}
+	err = validation.Validate(&topic)
+	require.Equal(t, "MessageGroupIdTemplate: cannot be blank.", err.Error())
+
+	topic = Topic{
+		TopicArn: "arn:aws:sns:ap-northeast-1:000000000000:test-topic",
+	}
+	err = validation.Validate(&topic)
+	require.NoError(t, err)
+
+	topic = Topic{
+		TopicArn:               "arn:aws:sns:ap-northeast-1:000000000000:test-topic.fifo",
+		MessageGroupIdTemplate: "id-{{id}}",
+	}
+	err = validation.Validate(&topic)
+	require.NoError(t, err)
 }

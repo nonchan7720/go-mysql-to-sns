@@ -1,6 +1,10 @@
 package config
 
-import "errors"
+import (
+	"errors"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+)
 
 var (
 	ErrNotFoundProducer = errors.New("Not found producer")
@@ -9,6 +13,10 @@ var (
 type Publisher struct {
 	AWS *AWS `yaml:"aws"`
 }
+
+var (
+	_ validation.Validatable = (*Publisher)(nil)
+)
 
 func (p *Publisher) IsAWS() bool {
 	return p.AWS != nil
@@ -24,4 +32,10 @@ func (p *Publisher) FindProducer(value string) (string, error) {
 		}
 	}
 	return "", ErrNotFoundProducer
+}
+
+func (p Publisher) Validate() error {
+	return validation.ValidateStruct(&p,
+		validation.Field(&p.AWS),
+	)
 }

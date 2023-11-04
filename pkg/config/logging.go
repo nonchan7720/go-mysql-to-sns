@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type LoggingHandle string
@@ -35,4 +37,20 @@ func (l *Logging) SetUpSlog() {
 	}
 	log := slog.New(h)
 	slog.SetDefault(log)
+}
+
+var (
+	logHandler = validation.NewStringRuleWithError(
+		func(value string) bool {
+			v := strings.ToLower(value)
+			return v == "json" || v == "text"
+		},
+		validation.NewError("validation_is_log_handle", "must be a value with json or text"),
+	)
+)
+
+func (l Logging) Validate() error {
+	return validation.ValidateStruct(&l,
+		validation.Field(&l.Handler, logHandler),
+	)
 }
