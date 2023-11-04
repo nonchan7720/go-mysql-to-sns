@@ -45,6 +45,7 @@ func executeOutboxBinlog(ctx context.Context, args *outboxBinlogArgs) {
 	if err != nil {
 		panic(err)
 	}
+	defer config.Logging.Close()
 
 	if err := executeValidation(&config.Config); err != nil {
 		panic(err)
