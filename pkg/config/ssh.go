@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/creasty/defaults"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 )
@@ -19,16 +18,10 @@ type SSH struct {
 	KnownHosts        string   `yaml:"knownHosts"`
 }
 
-func (s *SSH) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if err := defaults.Set(s); err != nil {
-		return err
+func (s *SSH) SetDefaults() {
+	if s.KnownHosts == "" {
+		s.KnownHosts = filepath.Join(os.Getenv("HOME"), ".ssh", "known_hosts")
 	}
-	s.KnownHosts = filepath.Join(os.Getenv("HOME"), ".ssh", "known_hosts")
-	type plain SSH
-	if err := unmarshal((*plain)(s)); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (conf *SSH) Conn() (*ssh.Client, error) {

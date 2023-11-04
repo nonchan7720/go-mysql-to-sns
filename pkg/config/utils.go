@@ -9,10 +9,11 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/creasty/defaults"
+	"github.com/goccy/go-yaml"
 	"github.com/google/uuid"
 	"github.com/nonchan7720/go-storage-to-messenger/pkg/utils"
 	"github.com/valyala/fasttemplate"
-	"gopkg.in/yaml.v3"
 )
 
 type TemplateType string
@@ -140,6 +141,19 @@ func loadConfig[T TConfig](filePath string) (*T, error) {
 	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
 		return nil, err
 	}
+	if err := defaults.Set(&config); err != nil {
+		return nil, err
+	}
+	if err := validate.Struct(&config); err != nil {
+		return nil, err
+	}
 	return &config, nil
+}
 
+func WriteConfig[T TConfig](w io.Writer) error {
+	var config T
+	if err := yaml.NewEncoder(w).Encode(&config); err != nil {
+		return err
+	}
+	return nil
 }

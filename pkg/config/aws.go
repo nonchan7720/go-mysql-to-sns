@@ -23,24 +23,6 @@ func (conf *AWS) WithStatic() awsv2.CredentialsProvider {
 	return credentials.NewStaticCredentialsProvider(conf.AccessKey, conf.SecretKet, "")
 }
 
-func (conf *AWS) Validation() error {
-	if conf.IsSNS() {
-		for _, topic := range conf.SNS.Topics {
-			if err := topic.Validation(); err != nil {
-				return err
-			}
-		}
-	}
-	if conf.IsSQS() {
-		for _, queue := range conf.SQS.Queues {
-			if err := queue.Validation(); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 func (conf *AWS) IsSNS() bool {
 	return conf.SNS != nil
 }

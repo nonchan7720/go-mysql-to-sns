@@ -10,8 +10,5 @@ func LoadOutboxConfig(filePath string) (*Outbox, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := config.Validation(); err != nil {
-		return nil, err
-	}
 	return config, nil
 }

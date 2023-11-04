@@ -4,8 +4,6 @@ import (
 	"log/slog"
 	"os"
 	"strings"
-
-	"github.com/creasty/defaults"
 )
 
 type LoggingHandle string
@@ -20,16 +18,8 @@ type Logging struct {
 	Handler LoggingHandle `yaml:"handler" default:"text"`
 }
 
-func (l *Logging) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if err := defaults.Set(l); err != nil {
-		return err
-	}
-	type plain Logging
-	if err := unmarshal((*plain)(l)); err != nil {
-		return err
-	}
+func (l *Logging) SetDefaults() {
 	l.SetUpSlog()
-	return nil
 }
 
 func (l *Logging) SetUpSlog() {

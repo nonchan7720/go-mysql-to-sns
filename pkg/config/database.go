@@ -4,33 +4,20 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"time"
-
-	"github.com/creasty/defaults"
 )
 
 type Database struct {
-	Host              string `yaml:"host"`
-	Port              int    `yaml:"port"`
-	Username          string `yaml:"username"`
-	Password          string `yaml:"password"`
-	DBName            string `yaml:"name"`
+	Host              string `yaml:"host" validate:"required"`
+	Port              int    `yaml:"port" default:"3306" validate:"required"`
+	Username          string `yaml:"username" validate:"required"`
+	Password          string `yaml:"password" validate:"required"`
+	DBName            string `yaml:"name" default:"mysql" validate:"required"`
 	SSHTunnel         bool   `yaml:"sshTunnel"`
 	TLS               *TLS   `yaml:"tls"`
 	MaxOpenConn       int    `yaml:"MAX_OPEN_CONN" default:"10"`
 	MaxLifeTimeSecond int    `yaml:"MAX_LIFE_TIME_SECOND" default:"300"`
 	MaxIdleConn       int    `yaml:"MAX_IDLE_CONN" default:"1"`
 	MaxIdleSecond     int    `yaml:"MAX_IDLE_SECOND" default:"0"`
-}
-
-func (d *Database) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if err := defaults.Set(d); err != nil {
-		return err
-	}
-	type plain Database
-	if err := unmarshal((*plain)(d)); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (d *Database) Tls() *tls.Config {

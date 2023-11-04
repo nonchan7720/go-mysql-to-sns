@@ -4,8 +4,6 @@ import (
 	"errors"
 	"strings"
 	"sync"
-
-	"github.com/creasty/defaults"
 )
 
 var (
@@ -70,17 +68,6 @@ func (t *Queue) IsFIFO() bool {
 func (t *Queue) Validation() error {
 	if t.IsFIFO() && t.MessageGroupIdTemplate == "" {
 		return errors.New("For FIFO topics, MessageGroupIdTemplate must be set.")
-	}
-	return nil
-}
-
-func (t *Queue) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if err := defaults.Set(t); err != nil {
-		return err
-	}
-	type plain Queue
-	if err := unmarshal((*plain)(t)); err != nil {
-		return err
 	}
 	return nil
 }

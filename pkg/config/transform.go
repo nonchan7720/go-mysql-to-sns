@@ -2,8 +2,6 @@ package config
 
 import (
 	"strings"
-
-	"github.com/creasty/defaults"
 )
 
 type Transform struct {
@@ -15,17 +13,6 @@ type Transform struct {
 
 func (t *Transform) IsTable() bool {
 	return t.Type == TableType
-}
-
-func (t *Transform) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if err := defaults.Set(t); err != nil {
-		return err
-	}
-	type plain Transform
-	if err := unmarshal((*plain)(t)); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (t *Transform) IsOutbox() bool {
