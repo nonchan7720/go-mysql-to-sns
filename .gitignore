@@ -22,3 +22,4 @@ go.work
 binlog
 examples/invoice
 covprofile
+.DS_Store
