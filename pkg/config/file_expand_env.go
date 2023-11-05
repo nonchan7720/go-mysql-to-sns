@@ -7,13 +7,18 @@ import (
 )
 
 func NewExpandEnv(name string) (io.Reader, error) {
-	buf, err := os.ReadFile(name)
+	f, err := os.Open(name)
 	if err != nil {
 		return nil, err
 	}
-	return NewExpandEnvWithReader(bytes.NewBufferString(os.ExpandEnv(string(buf)))), nil
+	defer f.Close()
+	return NewExpandEnvWithReader(f)
 }
 
-func NewExpandEnvWithReader(f io.Reader) io.Reader {
-	return f
+func NewExpandEnvWithReader(f io.Reader) (io.Reader, error) {
+	buf, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewBufferString(os.ExpandEnv(string(buf))), nil
 }
