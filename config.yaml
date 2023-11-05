@@ -1,3 +1,7 @@
+app:
+  appEnv: local
+  trackingEnv: local
+
 outbox:
   schema: mysql
   tableName: outbox

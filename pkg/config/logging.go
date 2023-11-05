@@ -6,51 +6,71 @@ import (
 	"strings"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-)
-
-type LoggingHandle string
-
-const (
-	JsonHandler = LoggingHandle("json")
-	TextHandler = LoggingHandle("text")
+	"github.com/nonchan7720/go-storage-to-messenger/pkg/logging"
 )
 
 type Logging struct {
-	Level   slog.Level    `yaml:"level"`
-	Handler LoggingHandle `yaml:"handler" default:"text"`
+	Level   slog.Level             `yaml:"level"`
+	Handler logging.LoggingHandle  `yaml:"handler" default:"text"`
+	Sentry  *logging.SentryConfig  `yaml:"sentry"`
+	Rollbar *logging.RollbarConfig `yaml:"rollbar"`
+
+	closer func()
 }
 
-func (l *Logging) SetDefaults() {
-	l.SetUpSlog()
-}
-
-func (l *Logging) SetUpSlog() {
-	var h slog.Handler
-	if strings.EqualFold(string(l.Handler), "json") {
-		h = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level: l.Level,
-		})
-	} else {
-		h = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: l.Level,
-		})
+func (l *Logging) SetupLog() {
+	var (
+		h slog.Handler
+	)
+	switch strings.ToLower(string(l.Handler)) {
+	case "sentry":
+		h = logging.NewSentryHandler(l.Sentry, DefaultConfig().App.TrackingEnv)
+		h = logging.NewHandler(setUpLog(string(l.Sentry.Backend.Handler), l.Sentry.Backend.Level), h)
+	case "rollbar":
+		l.Rollbar.Init(DefaultConfig().App.TrackingEnv, "v1", DefaultConfig().App.ServiceName)
+		l.closer = l.Rollbar.Close
+		h = logging.NewRollbarHandler(l.Rollbar)
+		h = logging.NewHandler(setUpLog(string(l.Rollbar.Backend.Handler), l.Rollbar.Backend.Level), h)
+	case "json":
+		h = logging.NewJSONHandler(
+			logging.WithWriter(os.Stdout),
+			logging.WithLevel(l.Level),
+		)
+	default:
+		h = logging.NewTextHandler(
+			logging.WithWriter(os.Stdout),
+			logging.WithLevel(l.Level),
+		)
 	}
 	log := slog.New(h)
 	slog.SetDefault(log)
 }
 
-var (
-	logHandler = validation.NewStringRuleWithError(
-		func(value string) bool {
-			v := strings.ToLower(value)
-			return v == "json" || v == "text"
-		},
-		validation.NewError("validation_is_log_handle", "must be a value with json or text"),
-	)
-)
-
 func (l Logging) Validate() error {
 	return validation.ValidateStruct(&l,
-		validation.Field(&l.Handler, logHandler),
+		validation.Field(&l.Handler, validation.NotIn("json", "text", "sentry", "rollbar")),
+		validation.Field(&l.Sentry, validation.When(l.Handler == "sentry", validation.NotNil)),
+		validation.Field(&l.Rollbar, validation.When(l.Handler == "rollbar", validation.NotNil)),
 	)
+}
+
+func (l Logging) Close() {
+	if l.closer != nil {
+		l.closer()
+	}
+}
+
+func setUpLog(handlerLogName string, level slog.Level) slog.Handler {
+	switch strings.ToLower(handlerLogName) {
+	case "json":
+		return logging.NewJSONHandler(
+			logging.WithWriter(os.Stdout),
+			logging.WithLevel(level),
+		)
+	default:
+		return logging.NewTextHandler(
+			logging.WithWriter(os.Stdout),
+			logging.WithLevel(level),
+		)
+	}
 }

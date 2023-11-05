@@ -44,6 +44,7 @@ func executePolling(parent context.Context, args *outboxPollingArgs) {
 	if err != nil {
 		panic(err)
 	}
+	defer config.Logging.Close()
 
 	publisher, err := getPublisher(ctx, config.Publisher)
 	if err != nil {

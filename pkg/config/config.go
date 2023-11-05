@@ -13,6 +13,7 @@ import (
 )
 
 type Config struct {
+	App       App          `yaml:"app"`
 	Database  Database     `yaml:"database"`
 	SSH       *SSH         `yaml:"ssh"`
 	Saver     *BinlogSaver `yaml:"saver"`

@@ -1,32 +1,24 @@
 package config
 
 import (
+	"bytes"
 	"io"
 	"os"
 )
 
-type ExpandEnv struct {
-	io.ReadCloser
-}
-
-func (f *ExpandEnv) Read(p []byte) (n int, err error) {
-	n, err = f.ReadCloser.Read(p)
-	if err == nil {
-		expandedData := os.ExpandEnv(string(p[:n]))
-		copy(p, []byte(expandedData))
-		n = len(expandedData)
-	}
-	return
-}
-
-func NewExpandEnv(name string) (io.ReadCloser, error) {
+func NewExpandEnv(name string) (io.Reader, error) {
 	f, err := os.Open(name)
 	if err != nil {
 		return nil, err
 	}
-	return NewExpandEnvWithReadeCloser(f), nil
+	defer f.Close()
+	return NewExpandEnvWithReader(f)
 }
 
-func NewExpandEnvWithReadeCloser(f io.ReadCloser) io.ReadCloser {
-	return &ExpandEnv{ReadCloser: f}
+func NewExpandEnvWithReader(f io.Reader) (io.Reader, error) {
+	buf, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewBufferString(os.ExpandEnv(string(buf))), nil
 }

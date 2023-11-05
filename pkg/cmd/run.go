@@ -49,6 +49,7 @@ func execute(ctx context.Context, args *runArgs) {
 	if err != nil {
 		panic(err)
 	}
+	defer config.Logging.Close()
 
 	if err := executeValidation(config); err != nil {
 		panic(err)

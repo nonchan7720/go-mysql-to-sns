@@ -1,6 +1,7 @@
 {
   "cSpell.words": [
     "binlog",
-    "healthcheck"
+    "healthcheck",
+    "rollbar"
   ]
 }
